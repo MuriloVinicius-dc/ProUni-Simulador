@@ -1,12 +1,12 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./layout";
 import Dashboard from "./pages/Dashboard";
 import SimulacaoPage from "./pages/Simulacao";
 
 function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Layout>
         <Routes>
           <Route path="/" element={<Navigate to="/Dashboard" replace />} />
@@ -14,7 +14,7 @@ function App() {
           <Route path="/Simulacao" element={<SimulacaoPage />} />
         </Routes>
       </Layout>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
