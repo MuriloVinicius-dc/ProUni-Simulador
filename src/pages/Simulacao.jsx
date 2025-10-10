@@ -90,19 +90,19 @@ export default function SimulacaoPage() {
         {/* Header */}
         <div className="mb-8">
           <Link to={createPageUrl("Dashboard")}>
-            <Button variant="ghost" className="mb-4 text-slate-600 hover:text-slate-900">
+            <Button variant="ghost" className="mb-4 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar ao início
             </Button>
           </Link>
           
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-slate-900 mb-4">
+            <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-4">
               {etapa === "formulario" && "Preencha seus dados para análise"}
               {etapa === "processamento" && "Analisando seu perfil"}
               {etapa === "resultado" && "Resultado da sua simulação"}
             </h1>
-            <p className="text-lg text-slate-600">
+            <p className="text-lg text-slate-600 dark:text-slate-300">
               {etapa === "formulario" && "Informe seus dados acadêmicos e pessoais para verificarmos sua elegibilidade"}
               {etapa === "processamento" && "Estamos comparando seu perfil com dados históricos do ProUni"}
               {etapa === "resultado" && "Confira o resultado da análise baseada em dados oficiais"}
@@ -111,7 +111,7 @@ export default function SimulacaoPage() {
         </div>
 
         {/* Conteúdo baseado na etapa */}
-        <Card className="border-0 shadow-2xl bg-white/70 backdrop-blur-sm">
+        <Card className="border-0 shadow-2xl bg-white/70 dark:bg-slate-900/80 backdrop-blur-sm dark:shadow-black/50 dark:ring-1 dark:ring-slate-800/50">
           {etapa === "formulario" && (
             <FormularioSimulacao onSubmit={handleSubmitFormulario} />
           )}

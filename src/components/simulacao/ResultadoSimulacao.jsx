@@ -32,18 +32,18 @@ export default function ResultadoSimulacao({ resultado, onNovaSimulacao }) {
       <CardHeader className="text-center pb-8">
         <div className={`w-24 h-24 rounded-full mx-auto mb-6 flex items-center justify-center ${
           isElegivel 
-            ? "bg-green-100" 
-            : "bg-orange-100"
+            ? "bg-green-100 dark:bg-green-900/30" 
+            : "bg-orange-100 dark:bg-orange-900/30"
         }`}>
           {isElegivel ? (
-            <CheckCircle className="w-12 h-12 text-green-600" />
+            <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
           ) : (
-            <AlertCircle className="w-12 h-12 text-orange-600" />
+            <AlertCircle className="w-12 h-12 text-orange-600 dark:text-orange-400" />
           )}
         </div>
         
         <CardTitle className={`text-3xl mb-4 ${
-          isElegivel ? "text-green-700" : "text-orange-700"
+          isElegivel ? "text-green-700 dark:text-green-400" : "text-orange-700 dark:text-orange-400"
         }`}>
           {isElegivel 
             ? "Você tem boas chances!" 
@@ -51,7 +51,7 @@ export default function ResultadoSimulacao({ resultado, onNovaSimulacao }) {
           }
         </CardTitle>
         
-        <p className="text-lg text-slate-600">
+        <p className="text-lg text-slate-600 dark:text-slate-300">
           {isElegivel 
             ? "Seu perfil se enquadra nos critérios do ProUni" 
             : "Você não atende todos os critérios necessários"
@@ -64,48 +64,48 @@ export default function ResultadoSimulacao({ resultado, onNovaSimulacao }) {
         <div className="text-center">
           <div className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-lg font-bold ${
             isElegivel 
-              ? "bg-green-100 text-green-800" 
-              : "bg-orange-100 text-orange-800"
+              ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300" 
+              : "bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300"
           }`}>
             <span>Pontuação: {pontuacao}/100</span>
           </div>
         </div>
 
         {/* Detalhes do resultado */}
-        <Card className="border border-slate-200">
+        <Card className="border-0 shadow-lg bg-white dark:bg-slate-900/80 dark:shadow-black/50 dark:ring-1 dark:ring-slate-800/50">
           <CardHeader>
-            <CardTitle className="text-lg">Análise detalhada</CardTitle>
+            <CardTitle className="text-lg text-slate-900 dark:text-slate-100">Análise detalhada</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4 text-sm">
               <div className="flex justify-between">
-                <span className="text-slate-600">Critério renda:</span>
+                <span className="text-slate-600 dark:text-slate-400">Critério renda:</span>
                 <span className={`font-medium ${
-                  (resultado.renda_familiar / 4) <= (1212 * 3) ? "text-green-600" : "text-red-600"
+                  (resultado.renda_familiar / 4) <= (1212 * 3) ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                 }`}>
                   {(resultado.renda_familiar / 4) <= (1212 * 3) ? "✓ Atendido" : "✗ Não atendido"}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-600">Nota ENEM:</span>
+                <span className="text-slate-600 dark:text-slate-400">Nota ENEM:</span>
                 <span className={`font-medium ${
-                  resultado.nota_enem >= 450 ? "text-green-600" : "text-red-600"
+                  resultado.nota_enem >= 450 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                 }`}>
                   {resultado.nota_enem >= 450 ? "✓ Suficiente" : "✗ Insuficiente"}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-600">Escola pública:</span>
+                <span className="text-slate-600 dark:text-slate-400">Escola pública:</span>
                 <span className={`font-medium ${
-                  resultado.tipo_escola === "Publica" ? "text-green-600" : "text-orange-600"
+                  resultado.tipo_escola === "Publica" ? "text-green-600 dark:text-green-400" : "text-orange-600 dark:text-orange-400"
                 }`}>
                   {resultado.tipo_escola === "Publica" ? "✓ Sim" : "○ Privada"}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-600">Pessoa com deficiência:</span>
+                <span className="text-slate-600 dark:text-slate-400">Pessoa com deficiência:</span>
                 <span className={`font-medium ${
-                  resultado.pessoa_deficiencia ? "text-green-600" : "text-slate-500"
+                  resultado.pessoa_deficiencia ? "text-green-600 dark:text-green-400" : "text-slate-500 dark:text-slate-400"
                 }`}>
                   {resultado.pessoa_deficiencia ? "✓ Sim" : "○ Não"}
                 </span>
@@ -115,10 +115,10 @@ export default function ResultadoSimulacao({ resultado, onNovaSimulacao }) {
         </Card>
 
         {/* Dicas */}
-        <Card className="border border-slate-200">
+        <Card className="border-0 shadow-lg bg-white dark:bg-slate-900/80 dark:shadow-black/50 dark:ring-1 dark:ring-slate-800/50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Lightbulb className="w-5 h-5 text-yellow-500" />
+            <CardTitle className="flex items-center gap-2 text-lg text-slate-900 dark:text-slate-100">
+              <Lightbulb className="w-5 h-5 text-yellow-500 dark:text-yellow-400" />
               {isElegivel ? "Próximos passos" : "Dicas para melhorar"}
             </CardTitle>
           </CardHeader>
@@ -126,8 +126,8 @@ export default function ResultadoSimulacao({ resultado, onNovaSimulacao }) {
             <ul className="space-y-3">
               {getDicas().map((dica, index) => (
                 <li key={index} className="flex items-start gap-3">
-                  <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
-                  <span className="text-slate-700">{dica}</span>
+                  <div className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full mt-2 flex-shrink-0" />
+                  <span className="text-slate-700 dark:text-slate-300">{dica}</span>
                 </li>
               ))}
             </ul>
@@ -135,8 +135,8 @@ export default function ResultadoSimulacao({ resultado, onNovaSimulacao }) {
         </Card>
 
         {/* Links úteis */}
-        <div className="bg-slate-50 rounded-2xl p-6">
-          <h3 className="font-semibold text-slate-900 mb-4">Links úteis</h3>
+        <div className="bg-slate-50 dark:bg-slate-900/60 rounded-2xl p-6 dark:ring-1 dark:ring-slate-800/50">
+          <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-4">Links úteis</h3>
           <div className="space-y-3">
             <a
               href="https://prouniportal.mec.gov.br/"

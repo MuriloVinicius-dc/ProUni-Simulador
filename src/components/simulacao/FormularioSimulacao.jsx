@@ -121,20 +121,20 @@ export default function FormularioSimulacao({ onSubmit }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <CardHeader className="text-center pb-8">
-        <CardTitle className="text-2xl text-slate-900">
+        <CardTitle className="text-2xl text-slate-900 dark:text-slate-100">
           Seus dados para análise
         </CardTitle>
-        <p className="text-slate-600">
+        <p className="text-slate-600 dark:text-slate-300">
           Todas as informações são confidenciais e usadas apenas para simulação
         </p>
       </CardHeader>
 
       <CardContent className="space-y-8">
         {/* Dados Pessoais */}
-        <Card className="border border-slate-200">
+        <Card className="border-0 shadow-lg bg-white dark:bg-slate-900/80 dark:shadow-black/50 dark:ring-1 dark:ring-slate-800/50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <User className="w-5 h-5 text-blue-600" />
+            <CardTitle className="flex items-center gap-2 text-lg text-slate-900 dark:text-slate-100">
+              <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               Dados Pessoais
             </CardTitle>
           </CardHeader>
@@ -240,10 +240,10 @@ export default function FormularioSimulacao({ onSubmit }) {
         </Card>*/}
 
         {/* Dados Acadêmicos*/}
-        <Card className="border border-slate-200">
+        <Card className="border-0 shadow-lg bg-white dark:bg-slate-900/80 dark:shadow-black/50 dark:ring-1 dark:ring-slate-800/50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <GraduationCap className="w-5 h-5 text-purple-600" />
+            <CardTitle className="flex items-center gap-2 text-lg text-slate-900 dark:text-slate-100">
+              <GraduationCap className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               Dados Acadêmicos
             </CardTitle>
           </CardHeader>
@@ -309,10 +309,10 @@ export default function FormularioSimulacao({ onSubmit }) {
         </Card>
 
         {/* Localização */}
-        <Card className="border border-slate-200">
+        <Card className="border-0 shadow-lg bg-white dark:bg-slate-900/80 dark:shadow-black/50 dark:ring-1 dark:ring-slate-800/50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <MapPin className="w-5 h-5 text-red-600" />
+            <CardTitle className="flex items-center gap-2 text-lg text-slate-900 dark:text-slate-100">
+              <MapPin className="w-5 h-5 text-red-600 dark:text-red-400" />
               Localização
             </CardTitle>
           </CardHeader>
@@ -365,7 +365,7 @@ export default function FormularioSimulacao({ onSubmit }) {
           >
             Enviar para análise
           </Button>
-          <p className="text-sm text-slate-500 mt-3">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-3">
             * Campos obrigatórios
           </p>
         </div>

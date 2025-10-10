@@ -29,10 +29,10 @@ export default function ProcessamentoSimulacao({ dados }) {
         <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full mx-auto mb-6 flex items-center justify-center animate-pulse">
           <BarChart3 className="w-10 h-10 text-white" />
         </div>
-        <CardTitle className="text-2xl text-slate-900 mb-4">
+        <CardTitle className="text-2xl text-slate-900 dark:text-slate-100 mb-4">
           Analisando seu perfil
         </CardTitle>
-        <p className="text-slate-600">
+        <p className="text-slate-600 dark:text-slate-300">
           Estamos comparando seus dados com milhares de casos do ProUni...
         </p>
       </CardHeader>
@@ -40,8 +40,8 @@ export default function ProcessamentoSimulacao({ dados }) {
       <CardContent className="space-y-8">
         <div className="space-y-4">
           <div className="flex justify-between items-center">
-            <span className="text-sm font-medium text-slate-700">Progresso da análise</span>
-            <span className="text-sm font-bold text-blue-600">{Math.round(progresso)}%</span>
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Progresso da análise</span>
+            <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{Math.round(progresso)}%</span>
           </div>
           <Progress value={progresso} className="h-3" />
         </div>
@@ -51,45 +51,45 @@ export default function ProcessamentoSimulacao({ dados }) {
             <div key={etapa.id} className="flex items-center gap-4">
               <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500 ${
                 etapa.concluida 
-                  ? "bg-green-100 text-green-600" 
-                  : "bg-slate-100 text-slate-400"
+                  ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400" 
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500"
               }`}>
                 <etapa.icon className="w-6 h-6" />
               </div>
               <div className="flex-1">
                 <p className={`font-medium transition-all duration-500 ${
-                  etapa.concluida ? "text-green-700" : "text-slate-600"
+                  etapa.concluida ? "text-green-700 dark:text-green-400" : "text-slate-600 dark:text-slate-400"
                 }`}>
                   {etapa.nome}
                 </p>
               </div>
               {etapa.concluida && (
-                <CheckCircle className="w-5 h-5 text-green-600" />
+                <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
               )}
             </div>
           ))}
         </div>
 
-        <div className="bg-blue-50 rounded-2xl p-6 mt-8">
-          <h3 className="font-semibold text-slate-900 mb-3">
+        <div className="bg-blue-50 dark:bg-slate-900/60 rounded-2xl p-6 mt-8 dark:ring-1 dark:ring-blue-900/30">
+          <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">
             Dados sendo analisados:
           </h3>
           <div className="grid md:grid-cols-2 gap-4 text-sm">
             <div className="flex justify-between">
-              <span className="text-slate-600">Idade:</span>
-              <span className="font-medium">{dados.idade} anos</span>
+              <span className="text-slate-600 dark:text-slate-400">Idade:</span>
+              <span className="font-medium text-slate-900 dark:text-slate-100">{dados.idade} anos</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600">Nota ENEM:</span>
-              <span className="font-medium">{dados.nota_enem}</span>
+              <span className="text-slate-600 dark:text-slate-400">Nota ENEM:</span>
+              <span className="font-medium text-slate-900 dark:text-slate-100">{dados.nota_enem}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600">Escola:</span>
-              <span className="font-medium">{dados.tipo_escola}</span>
+              <span className="text-slate-600 dark:text-slate-400">Escola:</span>
+              <span className="font-medium text-slate-900 dark:text-slate-100">{dados.tipo_escola}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600">Renda familiar:</span>
-              <span className="font-medium">R$ {dados.renda_familiar?.toFixed(2)}</span>
+              <span className="text-slate-600 dark:text-slate-400">Renda familiar:</span>
+              <span className="font-medium text-slate-900 dark:text-slate-100">R$ {dados.renda_familiar?.toFixed(2)}</span>
             </div>
           </div>
         </div>
