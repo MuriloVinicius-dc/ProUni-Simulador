@@ -1,0 +1,42 @@
+name: Build and deploy to GitHub Pages (docs/)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Commit and push built docs/
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Create a branch for the build commit if there are changes in docs/
+          if [ -n "$(git status --porcelain docs)" ]; then
+            git add docs
+            git commit -m "chore: build site (docs) [skip ci]" || echo "no changes to commit"
+            git push origin HEAD:main
+          else
+            echo "No changes in docs/ to commit"
+          fi
