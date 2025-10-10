@@ -110,7 +110,7 @@ export default function Dashboard() {
             <Button 
               size="lg"
               variant="outline"
-              className="border-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 hover:bg-gradient-to-r hover:from-blue-600 hover:to-indigo-600 hover:border-transparent hover:text-white hover:shadow-lg hover:scale-105 dark:hover:from-blue-500 dark:hover:to-indigo-500 px-8 py-6 text-lg font-semibold rounded-2xl transition-all duration-300"
+              className="border-2 border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 hover:bg-blue-1000 hover:border-blue-1000 hover:text-white dark:hover:bg-blue-1000 dark:hover:border-blue-900 px-8 py-6 text-lg font-semibold rounded-2xl transition-all duration-200"
             >
               Começar simulação
               <ArrowRight className="w-5 h-5 ml-2" />
