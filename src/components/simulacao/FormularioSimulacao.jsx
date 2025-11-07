@@ -91,9 +91,9 @@ export default function FormularioSimulacao({ onSubmit }) {
     }
   if (!formData.sexo) newErrors.sexo = "Selecione o sexo";
   if (!formData.raca) newErrors.raca = "Selecione a raça";
-    if (!formData.renda_familiar || formData.renda_familiar < 0) {
+    {/*if (!formData.renda_familiar || formData.renda_familiar < 0) {
       newErrors.renda_familiar = "Informe a renda familiar";
-    }
+    }*/}
     if (!formData.nota_enem || formData.nota_enem < 0 || formData.nota_enem > 1000) {
       newErrors.nota_enem = "Nota do ENEM deve estar entre 0 e 1000";
     }
