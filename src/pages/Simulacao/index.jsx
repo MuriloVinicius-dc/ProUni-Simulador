@@ -5,10 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-
-import FormularioSimulacao from "@/components/simulacao/FormularioSimulacao";
-import ResultadoSimulacao from "@/components/simulacao/ResultadoSimulacao";
-import ProcessamentoSimulacao from "@/components/simulacao/ProcessamentoSimulacao";
+import { FormularioSimulacao, ResultadoSimulacao, ProcessamentoSimulacao } from "@/components/simulacao";
 
 export default function SimulacaoPage() {
   const [etapa, setEtapa] = useState("formulario"); // formulario, processamento, resultado
