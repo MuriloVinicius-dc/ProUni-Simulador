@@ -22,18 +22,16 @@ export default function Login() {
     try {
       setError(null)
       setLoading(true)
-      const result = await signIn(email, password)
-      
-      // Se retornar sucesso, navega
-      if (result?.user) {
-        navigate(from, { replace: true })
-      }
+      await signIn(email, password)
+      navigate(from, { replace: true })
     } catch (error) {
       console.error('Erro no login:', error)
       if (error.message.includes('Invalid login credentials')) {
         setError('E-mail ou senha incorretos')
       } else if (error.message.includes('Email not confirmed')) {
         setError('Por favor, confirme seu e-mail antes de fazer login')
+      } else if (error.message.includes('DEMO_MODE')) {
+        setError('🔧 Modo demonstração: configure o Supabase para autenticação real')
       } else {
         setError('Erro ao fazer login. Tente novamente.')
       }
@@ -47,11 +45,10 @@ export default function Login() {
       setError(null)
       setGoogleLoading(true)
       await signInWithGoogle()
-      // Se chegar aqui sem erro, navegue (OAuth geralmente redireciona)
     } catch (error) {
       console.error('Erro no login com Google:', error)
-      if (error.message?.includes('DEMO_MODE') || error.message?.includes('OAuth não disponível')) {
-        setError('🔧 Modo demonstração ativo. Login com Google não disponível sem configuração do Supabase.')
+      if (error.message.includes('DEMO_MODE')) {
+        setError('🔧 Modo demonstração: configure o Supabase para usar Google OAuth')
       } else {
         setError('Erro ao conectar com Google. Tente novamente.')
       }
