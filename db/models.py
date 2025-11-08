@@ -20,9 +20,9 @@ class Candidato(Base):
     senha = Column(Text, nullable=False) 
     idade = Column(Integer)
     sexo = Column(Text)
+    raca = Column(Text)
 
     nota = relationship("Nota", back_populates="candidato", uselist=False)
-    inscricoes = relationship("Inscricao", back_populates="candidato")
 
 class Nota(Base):
     __tablename__ = "nota"
@@ -33,6 +33,7 @@ class Nota(Base):
     nota_lc = Column(REAL, nullable=False)  
     nota_mt = Column(REAL, nullable=False) 
     nota_redacao = Column(REAL, nullable=False)
+    modalidade = Column(Text, nullable=False)
 
     candidato = relationship("Candidato", back_populates="nota", uselist=False)
     inscricoes = relationship("Inscricao", back_populates="nota")
@@ -46,7 +47,8 @@ class Curso(Base):
     modalidade = Column(Text)
     nota_maxima = Column(REAL, nullable=False)
     nota_minima = Column(REAL, nullable=False)
-    
+    turno = Column(Text)
+
     instituicao = relationship("Instituicao", back_populates="cursos")
     inscricoes = relationship("Inscricao", back_populates="curso")
 

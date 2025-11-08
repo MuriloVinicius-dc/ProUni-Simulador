@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List
 from db import crud, models, schemas
@@ -28,6 +28,29 @@ def get_aprovados_endpoint(
     lista_aprovados = crud.get_aprovados_by_curso(db=db, curso_id=curso_id)
 
     return lista_aprovados
+
+@router.get(
+    "/curso/detalhes/",
+    response_model=schemas.CursoCreate, # Schema de resposta com as notas
+    status_code=status.HTTP_200_OK,
+    summary="Busca as notas de corte de um curso pelo nome"
+)
+def get_curso_detalhes_endpoint(
+    nome_curso: str = Query(..., description="Nome completo do curso a ser buscado"),
+    db: Session = DbDependency
+):
+    """
+    Busca o curso e retorna suas notas de corte (mínima e máxima).
+    """
+    db_curso = crud.get_curso_by_name(db, nome_curso=nome_curso)
+
+    if not db_curso:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Curso '{nome_curso}' não encontrado."
+        )
+
+    return db_curso
 
 @router.post("/candidatos/", response_model=schemas.Candidato, status_code=status.HTTP_201_CREATED)
 def create_candidato_endpoint(candidato: schemas.CandidatoCreate, db: Session = DbDependency):

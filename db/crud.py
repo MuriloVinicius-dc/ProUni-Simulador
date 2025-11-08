@@ -3,6 +3,13 @@ from db import models, schemas
 from typing import List, Optional, Any
 from sqlalchemy import func, case 
 
+
+def get_curso_by_name(db: Session, nome_curso: str) -> Optional[models.Curso]:
+    """Busca um curso no banco de dados pelo nome."""
+    return db.query(models.Curso).filter(
+        func.lower(models.Curso.nome_curso) == func.lower(nome_curso)
+    ).first()
+
 def calcular_aprovacao(db:Session, candidato_id: int, curso_id: int):
     """
     Calcula se a nota média do candidato é suficiente para a nota mínima do curso,
@@ -130,23 +137,26 @@ def get_or_create_instituicao(db: Session, instituicao_data: schemas.Instituicao
     return db_instituicao
 
 
-def get_or_create_curso(db: Session, curso_data: schemas.CursoCreate, instituicao_id: int) -> models.Curso:
-    """Busca um Curso existente ou o cria se não existir. Depende da Instituição."""
-
+def get_or_create_curso(db: Session, curso: schemas.CursoCreate, instituicao_id: int) -> models.Curso:
     db_curso = db.query(models.Curso).filter(
-        models.Curso.nome_curso == curso_data.nome_curso,
-        models.Curso.ID_instituicao == instituicao_id 
+        models.Curso.nome_curso == curso.nome_curso,
+        models.Curso.ID_instituicao == instituicao_id,
+        models.Curso.grau == curso.grau,
+        models.Curso.modalidade == curso.modalidade,
+        models.Curso.turno == curso.turno 
     ).first()
 
     if db_curso:
-        
         return db_curso
-    
-    db_curso_dict = curso_data.model_dump()
-    db_curso = models.Curso(**db_curso_dict, ID_instituicao=instituicao_id)
-    
+
+    curso_dict = curso.model_dump()
+    db_curso = models.Curso(
+        **curso_dict,
+        ID_instituicao=instituicao_id
+    )
     db.add(db_curso)
-    db.flush() 
+    db.flush()
+    db.refresh(db_curso)
     return db_curso
 
 
@@ -194,32 +204,29 @@ def delete_candidato(db: Session, candidato_id: int):
 def create_candidatos_lote(db: Session, candidatos_lote: schemas.LoteCandidatos):
     """
     Insere múltiplos candidatos e TODAS as suas dependências em uma transação atômica.
+    Removida a lógica de Inscrição.
     """
     
     for candidato_data in candidatos_lote.candidatos:
         
-        candidato_dict = candidato_data.model_dump(exclude={'nota', 'instituicao', 'curso', 'inscricao'})
+        # O dict do candidato agora inclui 'raca' e exclui as dependências
+        candidato_dict = candidato_data.model_dump(exclude={'nota', 'instituicao', 'curso'}) 
         db_candidato = models.Candidato(**candidato_dict)
         db.add(db_candidato) 
         db.flush() 
 
         db_instituicao = get_or_create_instituicao(db, candidato_data.instituicao)
 
+        # O curso_data agora inclui 'turno'
         db_curso = get_or_create_curso(db, candidato_data.curso, db_instituicao.ID)
 
+        # O dict da nota agora inclui 'modalidade'
         nota_dict = candidato_data.nota.model_dump()
         db_nota = models.Nota(**nota_dict, ID_Candidato=db_candidato.ID)
         db.add(db_nota)
         db.flush()
 
-        inscricao_dict = candidato_data.inscricao.model_dump()
-        db_inscricao = models.Inscricao(
-            **inscricao_dict,
-            ID_Candidato=db_candidato.ID,
-            ID_curso=db_curso.ID,
-            ID_nota=db_nota.ID_Nota 
-        )
-        db.add(db_inscricao)
+        # REMOVIDA A CRIAÇÃO DE INSCRICAO
 
     try:
         db.commit() 
