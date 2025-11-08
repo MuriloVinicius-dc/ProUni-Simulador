@@ -1,0 +1,192 @@
+/* Login Page Styles */
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to bottom right, 
+    rgb(248 250 252), 
+    rgb(239 246 255), 
+    rgb(238 242 255));
+  padding: 3rem 1rem;
+  position: relative;
+}
+
+:global(.dark) .container {
+  background: linear-gradient(to bottom right,
+    rgb(2 6 23),
+    rgb(15 23 42),
+    rgb(15 23 42));
+}
+
+.themeToggle {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+}
+
+.wrapper {
+  width: 100%;
+  max-width: 28rem;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.logoContainer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 5rem;
+  height: 5rem;
+  background: linear-gradient(to right, rgb(37 99 235), rgb(79 70 229));
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+}
+
+.title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: rgb(15 23 42);
+  margin-bottom: 0.5rem;
+}
+
+:global(.dark) .title {
+  color: rgb(241 245 249);
+}
+
+.subtitle {
+  color: rgb(71 85 105);
+  font-size: 0.875rem;
+}
+
+:global(.dark) .subtitle {
+  color: rgb(148 163 184);
+}
+
+.card {
+  border: none;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+}
+
+:global(.dark) .card {
+  background-color: rgba(15, 23, 42, 0.9);
+}
+
+.cardHeader {
+  text-align: center;
+  padding-bottom: 1.5rem;
+}
+
+.cardTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: rgb(15 23 42);
+}
+
+:global(.dark) .cardTitle {
+  color: rgb(241 245 249);
+}
+
+.cardDescription {
+  color: rgb(71 85 105);
+}
+
+:global(.dark) .cardDescription {
+  color: rgb(148 163 184);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.divider {
+  position: relative;
+}
+
+.dividerLine {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+}
+
+.dividerBorder {
+  width: 100%;
+  border-top: 1px solid rgb(226 232 240);
+}
+
+:global(.dark) .dividerBorder {
+  border-color: rgb(51 65 85);
+}
+
+.dividerText {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.dividerTextSpan {
+  background-color: white;
+  padding: 0 0.75rem;
+  color: rgb(100 116 139);
+  font-weight: 500;
+}
+
+:global(.dark) .dividerTextSpan {
+  background-color: rgb(15 23 42);
+  color: rgb(148 163 184);
+}
+
+.signupPrompt {
+  text-align: center;
+  font-size: 0.875rem;
+  padding-top: 0.5rem;
+}
+
+.signupText {
+  color: rgb(71 85 105);
+}
+
+:global(.dark) .signupText {
+  color: rgb(148 163 184);
+}
+
+.signupLink {
+  color: rgb(37 99 235);
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.signupLink:hover {
+  color: rgb(29 78 216);
+}
+
+:global(.dark) .signupLink {
+  color: rgb(96 165 250);
+}
+
+:global(.dark) .signupLink:hover {
+  color: rgb(147 197 253);
+}
+
+.footer {
+  text-align: center;
+  font-size: 0.75rem;
+  color: rgb(100 116 139);
+  margin-top: 1.5rem;
+}
+
+:global(.dark) .footer {
+  color: rgb(100 116 139);
+}
