@@ -1,7 +1,11 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { authService } from '@/services/authService'
 
 const AuthContext = createContext({})
+
+// Verifica se deve usar a API FastAPI real
+const USE_REAL_API = import.meta.env.VITE_USE_REAL_API === 'true'
 
 export const useAuth = () => {
   const context = useContext(AuthContext)
@@ -17,14 +21,29 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Verificar sessão ativa
+    // Se usa API real, verifica localStorage
+    if (USE_REAL_API) {
+      const storedUser = localStorage.getItem('user')
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser)
+          setUser(userData)
+          setSession({ user: userData })
+        } catch (e) {
+          console.error('Erro ao carregar usuário do localStorage:', e)
+        }
+      }
+      setLoading(false)
+      return
+    }
+
+    // Caso contrário, usa Supabase
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
     })
 
-    // Escutar mudanças de autenticação
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -38,6 +57,20 @@ export const AuthProvider = ({ children }) => {
 
   // Login com email e senha
   const signIn = async (email, password) => {
+    if (USE_REAL_API) {
+      // Usa API FastAPI
+      const response = await authService.login(email, password)
+      if (response.access_status === 'success') {
+        const userData = response.candidato
+        setUser(userData)
+        setSession({ user: userData })
+        localStorage.setItem('user', JSON.stringify(userData))
+        return { user: userData }
+      }
+      throw new Error('Falha na autenticação')
+    }
+
+    // Usa Supabase
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -48,6 +81,20 @@ export const AuthProvider = ({ children }) => {
 
   // Cadastro com email e senha
   const signUp = async (email, password, metadata = {}) => {
+    if (USE_REAL_API) {
+      // Usa API FastAPI
+      const candidatoData = {
+        email,
+        senha: password,
+        nome: metadata.nome || email.split('@')[0],
+        idade: metadata.idade,
+        sexo: metadata.sexo,
+      }
+      const candidato = await authService.cadastrar(candidatoData)
+      return { user: candidato }
+    }
+
+    // Usa Supabase
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -73,6 +120,15 @@ export const AuthProvider = ({ children }) => {
 
   // Logout
   const signOut = async () => {
+    if (USE_REAL_API) {
+      // Limpa localStorage
+      localStorage.removeItem('user')
+      setUser(null)
+      setSession(null)
+      return
+    }
+
+    // Usa Supabase
     const { error } = await supabase.auth.signOut()
     if (error) throw error
   }
