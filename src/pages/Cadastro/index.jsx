@@ -20,20 +20,22 @@ export default function Cadastro() {
     try {
       setError(null)
       setLoading(true)
-      await signUp(email, password, metadata)
-      setSuccess(true)
+      const result = await signUp(email, password, metadata)
       
-      setTimeout(() => {
-        navigate(createPageUrl('Login'))
-      }, 3000)
+      // Se retornar sucesso, mostra mensagem de sucesso
+      if (result?.user) {
+        setSuccess(true)
+        
+        setTimeout(() => {
+          navigate(createPageUrl('Login'))
+        }, 3000)
+      }
     } catch (error) {
       console.error('Erro no cadastro:', error)
       if (error.message.includes('User already registered')) {
         setError('Este e-mail já está cadastrado')
       } else if (error.message.includes('Password should be at least')) {
         setError('A senha deve ter pelo menos 6 caracteres')
-      } else if (error.message.includes('DEMO_MODE')) {
-        setError('🔧 Modo demonstração: configure o Supabase para cadastro real')
       } else {
         setError('Erro ao criar conta. Tente novamente.')
       }
@@ -47,10 +49,11 @@ export default function Cadastro() {
       setError(null)
       setGoogleLoading(true)
       await signInWithGoogle()
+      // Se chegar aqui sem erro, navegue (OAuth geralmente redireciona)
     } catch (error) {
       console.error('Erro no cadastro com Google:', error)
-      if (error.message.includes('DEMO_MODE')) {
-        setError('🔧 Modo demonstração: configure o Supabase para usar Google OAuth')
+      if (error.message?.includes('DEMO_MODE') || error.message?.includes('OAuth não disponível')) {
+        setError('🔧 Modo demonstração ativo. Cadastro com Google não disponível sem configuração do Supabase.')
       } else {
         setError('Erro ao conectar com Google. Tente novamente.')
       }

@@ -25,18 +25,57 @@ const createMockSupabase = () => {
     order: () => mockChain,
     delete: async () => ({ error: new Error('DEMO_MODE: sem backend') }),
   }
+  
+  // Mock user para demo mode
+  const createMockUser = (email) => ({
+    id: 'demo-user-' + Date.now(),
+    email,
+    user_metadata: { nome: email.split('@')[0] },
+    created_at: new Date().toISOString(),
+  })
+  
   return {
     auth: {
       getSession: async () => ({ data: { session: null }, error: null }),
       getUser: async () => ({ data: { user: null }, error: null }),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-      // Lançamos erros amigáveis para deixar claro que é demo
-      signInWithPassword: async () => { throw new Error('DEMO_MODE: backend de autenticação não configurado') },
-      signUp: async () => { throw new Error('DEMO_MODE: backend de autenticação não configurado') },
-      signInWithOAuth: async () => { throw new Error('DEMO_MODE: backend de autenticação não configurado') },
+      // Retorna sucesso com usuário mockado ao invés de throw
+      signInWithPassword: async ({ email }) => {
+        const user = createMockUser(email)
+        return { 
+          data: { 
+            user, 
+            session: { user, access_token: 'demo-token', refresh_token: 'demo-refresh' }
+          }, 
+          error: null 
+        }
+      },
+      signUp: async ({ email }) => {
+        const user = createMockUser(email)
+        return { 
+          data: { 
+            user, 
+            session: { user, access_token: 'demo-token', refresh_token: 'demo-refresh' }
+          }, 
+          error: null 
+        }
+      },
+      signInWithOAuth: async () => {
+        // OAuth em modo demo apenas retorna erro sem throw
+        return { 
+          data: null, 
+          error: new Error('DEMO_MODE: OAuth não disponível em modo demonstração') 
+        }
+      },
       signOut: async () => ({ error: null }),
-      resetPasswordForEmail: async () => { throw new Error('DEMO_MODE: backend de autenticação não configurado') },
-      updateUser: async () => { throw new Error('DEMO_MODE: backend de autenticação não configurado') },
+      resetPasswordForEmail: async () => ({ 
+        data: null, 
+        error: new Error('DEMO_MODE: reset de senha não disponível em modo demonstração') 
+      }),
+      updateUser: async () => ({ 
+        data: null, 
+        error: new Error('DEMO_MODE: atualização de usuário não disponível em modo demonstração') 
+      }),
     },
     from: () => mockChain,
   }
