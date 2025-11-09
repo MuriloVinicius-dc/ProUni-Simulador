@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List
-from backend.db import crud, models, schemas
-from backend.db.database import get_db
+from .. import crud, models, schemas
+from ..database import get_db
 
 router = APIRouter(tags=["Candidatos e Simulação"])
 DbDependency = Depends(get_db)
