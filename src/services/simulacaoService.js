@@ -5,31 +5,38 @@ import { api } from '@/lib/api'
 
 export const simulacaoService = {
   /**
-   * Busca lista de candidatos aprovados para um curso
-   * @param {number} cursoId 
-   * @returns {Promise<Array<{ID, nome, email, nota_final, nota_de_corte}>>}
-   */
-  async getAprovados(cursoId) {
-    const response = await api.get(`/aprovados/${cursoId}`)
-    return response
-  },
-
-  /**
-   * Cria uma simulação completa (candidato + notas + inscrição)
-   * @param {Object} simulacaoData - Dados completos da simulação
+   * Preenche dados complementares do candidato (notas, curso, instituição)
+   * @param {number} candidatoId 
+   * @param {Object} dadosComplementares - { nota, instituicao, curso }
    * @returns {Promise<Object>}
    */
-  async criarSimulacaoCompleta(simulacaoData) {
-    // Formato esperado pela API: LoteCandidatos
-    const payload = {
-      candidatos: [simulacaoData]
-    }
-    const response = await api.post('/candidatos/lote/', payload)
+  async preencherFormulario(candidatoId, dadosComplementares) {
+    const response = await api.post(`/formulario/${candidatoId}`, dadosComplementares)
     return response
   },
 
   /**
-   * Busca todos os candidatos
+   * Calcula e retorna o resultado da simulação para um candidato
+   * @param {number} candidatoId 
+   * @returns {Promise<{aprovado: boolean, mensagem: string, nota_candidato: float, nota_minima_corte: float, curso: string, diferenca: float}>}
+   */
+  async getResultado(candidatoId) {
+    const response = await api.get(`/resultados/${candidatoId}`)
+    return response
+  },
+
+  /**
+   * Cria dados em lote (teste)
+   * @param {Object} loteData - { candidatos: Array<CandidatoCompleto> }
+   * @returns {Promise<Object>}
+   */
+  async criarLote(loteData) {
+    const response = await api.post('/dados/lote/', loteData)
+    return response
+  },
+
+  /**
+   * Busca todos os candidatos (admin/teste)
    * @param {number} skip 
    * @param {number} limit 
    * @returns {Promise<Array>}

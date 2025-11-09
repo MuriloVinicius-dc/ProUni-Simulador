@@ -13,10 +13,35 @@ const ESTADOS_BRASIL = [
   "RS", "SC", "SE", "SP", "TO"
 ];
 
-const INSTITUICOES_SIGLAS = [
-  "UFPE", "UFRPE", "UPE", "IFPE", "UFRJ", "UERJ", "UFF", "UNIRIO", "USP", 
-  "UNICAMP", "UNESP", "UFMG", "UFU", "UFV", "UFBA", "UFSC", "UFRGS", "UFPR", 
-  "UnB", "UFC", "UFAM", "UFPA", "UFG", "UFES", "UFMS", "UFMT", "UFPB", "UFPI"
+const INSTITUICOES = [
+  { sigla: "UFPE", nome: "Universidade Federal de Pernambuco" },
+  { sigla: "UFRPE", nome: "Universidade Federal Rural de Pernambuco" },
+  { sigla: "UPE", nome: "Universidade de Pernambuco" },
+  { sigla: "IFPE", nome: "Instituto Federal de Pernambuco" },
+  { sigla: "UFRJ", nome: "Universidade Federal do Rio de Janeiro" },
+  { sigla: "UERJ", nome: "Universidade do Estado do Rio de Janeiro" },
+  { sigla: "UFF", nome: "Universidade Federal Fluminense" },
+  { sigla: "UNIRIO", nome: "Universidade Federal do Estado do Rio de Janeiro" },
+  { sigla: "USP", nome: "Universidade de São Paulo" },
+  { sigla: "UNICAMP", nome: "Universidade Estadual de Campinas" },
+  { sigla: "UNESP", nome: "Universidade Estadual Paulista" },
+  { sigla: "UFMG", nome: "Universidade Federal de Minas Gerais" },
+  { sigla: "UFU", nome: "Universidade Federal de Uberlândia" },
+  { sigla: "UFV", nome: "Universidade Federal de Viçosa" },
+  { sigla: "UFBA", nome: "Universidade Federal da Bahia" },
+  { sigla: "UFSC", nome: "Universidade Federal de Santa Catarina" },
+  { sigla: "UFRGS", nome: "Universidade Federal do Rio Grande do Sul" },
+  { sigla: "UFPR", nome: "Universidade Federal do Paraná" },
+  { sigla: "UnB", nome: "Universidade de Brasília" },
+  { sigla: "UFC", nome: "Universidade Federal do Ceará" },
+  { sigla: "UFAM", nome: "Universidade Federal do Amazonas" },
+  { sigla: "UFPA", nome: "Universidade Federal do Pará" },
+  { sigla: "UFG", nome: "Universidade Federal de Goiás" },
+  { sigla: "UFES", nome: "Universidade Federal do Espírito Santo" },
+  { sigla: "UFMS", nome: "Universidade Federal de Mato Grosso do Sul" },
+  { sigla: "UFMT", nome: "Universidade Federal de Mato Grosso" },
+  { sigla: "UFPB", nome: "Universidade Federal da Paraíba" },
+  { sigla: "UFPI", nome: "Universidade Federal do Piauí" },
 ];
 
 const TURNOS = ["Matutino", "Vespertino", "Noturno", "Integral"];
@@ -55,7 +80,11 @@ const MUNICIPIOS_BY_ESTADO = {
 const CURSOS_POPULARES = [
   "Administração", "Direito", "Engenharia Civil", "Medicina", "Enfermagem", 
   "Pedagogia", "Psicologia", "Ciências Contábeis", "Educação Física", "Sistemas de Informação",
-  "Arquitetura", "Fisioterapia", "Farmácia", "Odontologia", "Veterinária"
+  "Arquitetura", "Fisioterapia", "Farmácia", "Odontologia", "Veterinária",
+  "Ciência da Computação", "Engenharia de Computação", "Engenharia Elétrica", "Engenharia Mecânica",
+  "Análise e Desenvolvimento de Sistemas", "Redes de Computadores", "Segurança da Informação",
+  "Banco de Dados", "Gestão da Tecnologia da Informação", "Jogos Digitais", "Desenvolvimento Web",
+  "Inteligência Artificial", "Ciência de Dados", "Engenharia de Software"
 ];
 
 export default function FormularioSimulacao({ onSubmit }) {
@@ -65,9 +94,10 @@ export default function FormularioSimulacao({ onSubmit }) {
     nota_ch: "",
     nota_ct: "",
     nota_redacao: "",
-    modalidade: "",
+    modalidade_concorrencia: "",
     nome_curso: "",
-    instituicao: "",
+    instituicao_sigla: "",
+    instituicao_nome: "",
     grau: "",
     turno: "",
     estado: "",
@@ -82,6 +112,20 @@ export default function FormularioSimulacao({ onSubmit }) {
       setFormData(prev => ({ ...prev, [field]: value, municipio: "" }));
       if (errors.municipio) {
         setErrors(prev => ({ ...prev, municipio: null }));
+      }
+      return;
+    }
+
+    // Se a instituição mudar, atualiza sigla e nome
+    if (field === "instituicao_sigla") {
+      const instituicao = INSTITUICOES.find(inst => inst.sigla === value);
+      setFormData(prev => ({ 
+        ...prev, 
+        instituicao_sigla: value,
+        instituicao_nome: instituicao ? instituicao.nome : ""
+      }));
+      if (errors.instituicao_sigla) {
+        setErrors(prev => ({ ...prev, instituicao_sigla: null }));
       }
       return;
     }
@@ -107,8 +151,8 @@ export default function FormularioSimulacao({ onSubmit }) {
     validateNota("nota_ct", formData.nota_ct);
     validateNota("nota_redacao", formData.nota_redacao);
 
-    if (!formData.modalidade) newErrors.modalidade = "Informe a modalidade";
-    if (!formData.instituicao) newErrors.instituicao = "Informe a instituição";
+    if (!formData.modalidade_concorrencia) newErrors.modalidade_concorrencia = "Informe a modalidade";
+    if (!formData.instituicao_sigla) newErrors.instituicao_sigla = "Informe a instituição";
     if (!formData.nome_curso) newErrors.nome_curso = "Informe o nome do curso";
     if (!formData.grau) newErrors.grau = "Informe o grau do curso";
     if (!formData.turno) newErrors.turno = "Informe o turno";
@@ -120,14 +164,31 @@ export default function FormularioSimulacao({ onSubmit }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
-      onSubmit({
-        ...formData,
-        nota_lc: parseFloat(formData.nota_lc),
-        nota_mt: parseFloat(formData.nota_mt),
-        nota_ch: parseFloat(formData.nota_ch),
-        nota_ct: parseFloat(formData.nota_ct),
-        nota_redacao: parseFloat(formData.nota_redacao),
-      });
+      // Estruturar dados conforme esperado pelo backend
+      const dadosFormatados = {
+        nota: {
+          nota_ct: parseFloat(formData.nota_ct),
+          nota_ch: parseFloat(formData.nota_ch),
+          nota_lc: parseFloat(formData.nota_lc),
+          nota_mt: parseFloat(formData.nota_mt),
+          nota_redacao: parseFloat(formData.nota_redacao),
+          modalidade_concorrencia: formData.modalidade_concorrencia,
+        },
+        instituicao: {
+          nome: formData.instituicao_nome,
+          sigla: formData.instituicao_sigla,
+          localizacao_campus: formData.estado && formData.municipio 
+            ? `${formData.municipio} - ${formData.estado}` 
+            : formData.estado || null,
+        },
+        curso: {
+          nome_curso: formData.nome_curso,
+          grau: formData.grau || null,
+          turno: formData.turno || null,
+        }
+      };
+      
+      onSubmit(dadosFormatados);
     }
   };
 
@@ -241,17 +302,19 @@ export default function FormularioSimulacao({ onSubmit }) {
           <CardContent className="grid md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="instituicao">Instituição *</Label>
-              <Select onValueChange={(value) => handleInputChange("instituicao", value)} value={formData.instituicao}>
-                <SelectTrigger className={errors.instituicao ? "border-red-500" : ""}>
+              <Select onValueChange={(value) => handleInputChange("instituicao_sigla", value)} value={formData.instituicao_sigla}>
+                <SelectTrigger className={errors.instituicao_sigla ? "border-red-500" : ""}>
                   <SelectValue placeholder="Selecione a instituição" />
                 </SelectTrigger>
                 <SelectContent>
-                  {INSTITUICOES_SIGLAS.map(sigla => (
-                    <SelectItem key={sigla} value={sigla}>{sigla}</SelectItem>
+                  {INSTITUICOES.map(inst => (
+                    <SelectItem key={inst.sigla} value={inst.sigla}>
+                      {inst.sigla} - {inst.nome}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.instituicao && <p className="text-sm text-red-500">{errors.instituicao}</p>}
+              {errors.instituicao_sigla && <p className="text-sm text-red-500">{errors.instituicao_sigla}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="nome_curso">Nome do Curso *</Label>
@@ -296,9 +359,9 @@ export default function FormularioSimulacao({ onSubmit }) {
               {errors.turno && <p className="text-sm text-red-500">{errors.turno}</p>}
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="modalidade">Modalidade *</Label>
-              <Select onValueChange={(value) => handleInputChange("modalidade", value)} value={formData.modalidade}>
-                <SelectTrigger className={errors.modalidade ? "border-red-500" : ""}>
+              <Label htmlFor="modalidade">Modalidade de Concorrência *</Label>
+              <Select onValueChange={(value) => handleInputChange("modalidade_concorrencia", value)} value={formData.modalidade_concorrencia}>
+                <SelectTrigger className={errors.modalidade_concorrencia ? "border-red-500" : ""}>
                   <SelectValue placeholder="Selecione a modalidade" />
                 </SelectTrigger>
                 <SelectContent>
@@ -306,7 +369,7 @@ export default function FormularioSimulacao({ onSubmit }) {
                   <SelectItem value="Ampla Concorrência">Ampla Concorrência</SelectItem>
                 </SelectContent>
               </Select>
-              {errors.modalidade && <p className="text-sm text-red-500">{errors.modalidade}</p>}
+              {errors.modalidade_concorrencia && <p className="text-sm text-red-500">{errors.modalidade_concorrencia}</p>}
             </div>
           </CardContent>
         </Card>

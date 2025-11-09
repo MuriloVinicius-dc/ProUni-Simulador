@@ -17,14 +17,30 @@ export default function SimulacaoPage() {
     setEtapa("processamento");
 
     setTimeout(async () => {
-      const { mediaEnem, selecionado, posicao, vagas } = calcularResultado(dados);
+      const { mediaEnem, selecionado, posicao, vagas, notaMinima } = calcularResultado(dados);
       
       const novoResultado = {
-        ...dados,
+        // Dados do curso
+        nome_curso: dados.curso.nome_curso,
+        grau: dados.curso.grau,
+        turno: dados.curso.turno,
+        // Dados da instituição
+        instituicao: dados.instituicao.sigla,
+        instituicao_nome: dados.instituicao.nome,
+        localizacao_campus: dados.instituicao.localizacao_campus,
+        // Dados da nota
+        modalidade: dados.nota.modalidade_concorrencia,
+        nota_lc: dados.nota.nota_lc,
+        nota_mt: dados.nota.nota_mt,
+        nota_ch: dados.nota.nota_ch,
+        nota_ct: dados.nota.nota_ct,
+        nota_redacao: dados.nota.nota_redacao,
+        // Resultados calculados
         mediaEnem,
         selecionado,
         posicao,
         vagas,
+        nota_minima: notaMinima,
         // Hardcoded para o layout
         ingresso: "1º Semestre", 
         link_instituicao: "#",
@@ -43,15 +59,18 @@ export default function SimulacaoPage() {
   };
 
   const calcularResultado = (dados) => {
+    // Dados agora vêm na estrutura: { nota: {...}, instituicao: {...}, curso: {...} }
     const mediaEnem = (
-      dados.nota_lc +
-      dados.nota_mt +
-      dados.nota_ch +
-      dados.nota_ct +
-      dados.nota_redacao
+      dados.nota.nota_lc +
+      dados.nota.nota_mt +
+      dados.nota.nota_ch +
+      dados.nota.nota_ct +
+      dados.nota.nota_redacao
     ) / 5;
 
-    const selecionado = mediaEnem >= dados.nota_minima;
+    // Mock de nota mínima (em produção viria do backend)
+    const notaMinima = 600;
+    const selecionado = mediaEnem >= notaMinima;
     const vagas = 10; // Mock
     let posicao;
 
@@ -63,7 +82,7 @@ export default function SimulacaoPage() {
       posicao = vagas + Math.floor(Math.random() * 10) + 1;
     }
     
-    return { mediaEnem, selecionado, posicao, vagas };
+    return { mediaEnem, selecionado, posicao, vagas, notaMinima };
   };
 
   const reiniciarSimulacao = () => {

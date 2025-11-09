@@ -21,7 +21,6 @@ export const authService = {
    * @returns {Promise<Object>} - Candidato criado
    */
   async cadastrar(candidatoData) {
-    // FastAPI endpoint for creating a candidate is POST /cadastro
     const response = await api.post('/cadastro', candidatoData)
     return response
   },
@@ -44,16 +43,6 @@ export const authService = {
    */
   async atualizarCandidato(candidatoId, candidatoData) {
     const response = await api.put(`/candidatos/${candidatoId}`, candidatoData)
-    return response
-  },
-
-  /**
-   * Deleta um candidato
-   * @param {number} candidatoId 
-   * @returns {Promise<null>}
-   */
-  async deletarCandidato(candidatoId) {
-    const response = await api.delete(`/candidatos/${candidatoId}`)
     return response
   }
 }

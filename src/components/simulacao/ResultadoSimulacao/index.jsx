@@ -75,7 +75,6 @@ export default function ResultadoSimulacao({ resultado, onNovaSimulacao }) {
         <div className="mt-6 text-slate-500 dark:text-slate-400">
           <p>Sua nota foi: {mediaEnem.toFixed(2)}</p>
           <p>Nota mínima: {nota_minima}</p>
-          <p>Nota máxima: {nota_maxima}</p>
         </div>
       </div>
 
