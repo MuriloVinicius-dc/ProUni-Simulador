@@ -13,6 +13,15 @@ const ESTADOS_BRASIL = [
   "RS", "SC", "SE", "SP", "TO"
 ];
 
+const INSTITUICOES_SIGLAS = [
+  "UFPE", "UFRPE", "UPE", "IFPE", "UFRJ", "UERJ", "UFF", "UNIRIO", "USP", 
+  "UNICAMP", "UNESP", "UFMG", "UFU", "UFV", "UFBA", "UFSC", "UFRGS", "UFPR", 
+  "UnB", "UFC", "UFAM", "UFPA", "UFG", "UFES", "UFMS", "UFMT", "UFPB", "UFPI"
+];
+
+const TURNOS = ["Matutino", "Vespertino", "Noturno", "Integral"];
+const GRAUS = ["Bacharelado", "Licenciatura"];
+
 const MUNICIPIOS_BY_ESTADO = {
   "AC": ["ACRELANDIA", "ASSIS BRASIL", "BRASILEIA", "BUJARI", "CAPIXABA", "CRUZEIRO DO SUL", "EPITACIOLANDIA", "FEIJO", "JORDAO", "MANCIO LIMA", "MANOEL URBANO", "MARECHAL THAUMATURGO", "PLACIDO DE CASTRO", "PORTO ACRE", "PORTO WALTER", "RIO BRANCO", "RODRIGUES ALVES", "SENA MADUREIRA", "SENADOR GUIOMARD", "TARAUACA", "XAPURI"],
   "AL": ["AGUA BRANCA", "ANADIA", "ARAPIRACA", "ATALAIA", "BARRA DE SANTO ANTONIO", "BARRA DE SAO MIGUEL", "BATALHA", "BELO MONTE", "BOCA DA MATA", "BRANQUINHA", "CACIMBINHAS", "CAMPESTRE", "CAMPO ALEGRE", "CAMPO GRANDE", "CANAPI", "CAPELA", "CARNEIROS", "CHA PRETA", "COITE DO NOIA", "COLONIA LEOPOLDINA", "COQUEIRO SECO", "CORURIPE", "CRAIBAS", "DELMIRO GOUVEIA", "DOIS RIACHOS", "FEIRA GRANDE", "FLEXEIRAS", "GIRAU DO PONCIANO", "IBATEGUARA", "IGACI", "IGREJA NOVA", "INHAPI", "JACUIPE", "JARAMATAIA", "JEQUIA DA PRAIA", "JOAQUIM GOMES", "JUNDIA", "JUNQUEIRO", "LAGOA DA CANOA", "LIMOEIRO DE ANADIA", "MACEIO", "MAJOR ISIDORO", "MAR VERMELHO", "MARAGOGI", "MARAVILHA", "MARECHAL DEODORO", "MARIBONDO", "MATA GRANDE", "MATRIZ DE CAMARAGIBE", "MESSIAS", "MURICI", "OLHO D'AGUA DAS FLORES", "OLHO D'AGUA GRANDE", "OLIVENCA", "OURO BRANCO", "PALESTINA", "PALMEIRA DOS INDIOS", "PAO DE ACUCAR", "PARICONHA", "PARIPUEIRA", "PASSO DE CAMARAGIBE", "PAULO JACINTO", "PENEDO", "PIACABUCU", "PILAR", "PIRANHAS", "POCO DAS TRINCHEIRAS", "PORTO CALVO", "PORTO REAL DO COLEGIO", "QUEBRANGULO", "RIO LARGO", "ROTEIRO", "SANTANA DO IPANEMA", "SANTANA DO MUNDAU", "SAO JOSE DA LAJE", "SAO JOSE DA TAPERA", "SAO LUIS DO QUITUNDE", "SAO MIGUEL DOS CAMPOS", "SAO SEBASTIAO", "SATUBA", "SENADOR RUI PALMEIRA", "TANQUE D'ARCA", "TAQUARANA", "TEOTONIO VILELA", "TRAIPU", "UNIAO DOS PALMARES", "VICOSA"],
@@ -51,18 +60,18 @@ const CURSOS_POPULARES = [
 
 export default function FormularioSimulacao({ onSubmit }) {
   const [formData, setFormData] = useState({
-    idade: "",
-    sexo: "",
-    raca: "",
-    renda_familiar: "",
-    membros_familia: "",
-    nota_enem: "",
-    tipo_escola: "",
-    turno_pretendido: "",
+    nota_lc: "",
+    nota_mt: "",
+    nota_ch: "",
+    nota_ct: "",
+    nota_redacao: "",
+    modalidade: "",
+    nome_curso: "",
+    instituicao: "",
+    grau: "",
+    turno: "",
     estado: "",
     municipio: "",
-    curso_pretendido: "",
-    pessoa_deficiencia: false
   });
 
   const [errors, setErrors] = useState({});
@@ -86,21 +95,24 @@ export default function FormularioSimulacao({ onSubmit }) {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.idade || formData.idade < 16 || formData.idade > 70) {
-      newErrors.idade = "Idade deve estar entre 16 e 70 anos";
-    }
-  if (!formData.sexo) newErrors.sexo = "Selecione o sexo";
-  if (!formData.raca) newErrors.raca = "Selecione a raça";
-    {/*if (!formData.renda_familiar || formData.renda_familiar < 0) {
-      newErrors.renda_familiar = "Informe a renda familiar";
-    }*/}
-    if (!formData.nota_enem || formData.nota_enem < 0 || formData.nota_enem > 1000) {
-      newErrors.nota_enem = "Nota do ENEM deve estar entre 0 e 1000";
-    }
-    if (!formData.tipo_escola) newErrors.tipo_escola = "Selecione o tipo de escola";
-  // municipio é opcional, mas se estado estiver selecionado e não houver municipio selecionado, considerar erro
-  if (formData.estado && !formData.municipio) newErrors.municipio = "Selecione o município";
+    const validateNota = (field, value) => {
+      if (!value || value < 0 || value > 1000) {
+        newErrors[field] = "Nota deve estar entre 0 e 1000";
+      }
+    };
 
+    validateNota("nota_lc", formData.nota_lc);
+    validateNota("nota_mt", formData.nota_mt);
+    validateNota("nota_ch", formData.nota_ch);
+    validateNota("nota_ct", formData.nota_ct);
+    validateNota("nota_redacao", formData.nota_redacao);
+
+    if (!formData.modalidade) newErrors.modalidade = "Informe a modalidade";
+    if (!formData.instituicao) newErrors.instituicao = "Informe a instituição";
+    if (!formData.nome_curso) newErrors.nome_curso = "Informe o nome do curso";
+    if (!formData.grau) newErrors.grau = "Informe o grau do curso";
+    if (!formData.turno) newErrors.turno = "Informe o turno";
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -110,10 +122,11 @@ export default function FormularioSimulacao({ onSubmit }) {
     if (validateForm()) {
       onSubmit({
         ...formData,
-        idade: parseInt(formData.idade),
-        renda_familiar: parseFloat(formData.renda_familiar),
-        membros_familia: parseInt(formData.membros_familia) || 4,
-        nota_enem: parseFloat(formData.nota_enem)
+        nota_lc: parseFloat(formData.nota_lc),
+        nota_mt: parseFloat(formData.nota_mt),
+        nota_ch: parseFloat(formData.nota_ch),
+        nota_ct: parseFloat(formData.nota_ct),
+        nota_redacao: parseFloat(formData.nota_redacao),
       });
     }
   };
@@ -130,228 +143,170 @@ export default function FormularioSimulacao({ onSubmit }) {
       </CardHeader>
 
       <CardContent className="space-y-8">
-        {/* Dados Pessoais */}
-        <Card className="border-0 shadow-lg bg-white dark:bg-slate-900/80 dark:shadow-black/50 dark:ring-1 dark:ring-slate-800/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg text-slate-900 dark:text-slate-100">
-              <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              Dados Pessoais
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="idade">Idade *</Label>
-              <Input
-                id="idade"
-                type="number"
-                min="16"
-                max="100"
-                value={formData.idade}
-                onChange={(e) => handleInputChange("idade", e.target.value)}
-                className={errors.idade ? "border-red-500" : ""}
-              />
-              {errors.idade && <p className="text-sm text-red-500">{errors.idade}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="sexo">Sexo *</Label>
-              <Select value={formData.sexo} onValueChange={(value) => handleInputChange("sexo", value)}>
-                <SelectTrigger className={errors.sexo ? "border-red-500" : ""}>
-                  <SelectValue placeholder="Selecione seu sexo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Masculino">Masculino</SelectItem>
-                  <SelectItem value="Feminino">Feminino</SelectItem>
-                  <SelectItem value="Outro">Outro</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.sexo && <p className="text-sm text-red-500">{errors.sexo}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="raca">Raça *</Label>
-              <Select value={formData.raca} onValueChange={(value) => handleInputChange("raca", value)}>
-                <SelectTrigger className={errors.raca ? "border-red-500" : ""}>
-                  <SelectValue placeholder="Selecione sua raça" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Pardo">Pardo</SelectItem>
-                  <SelectItem value="Branco">Branco</SelectItem>
-                  <SelectItem value="Preto">Preto</SelectItem>
-                  <SelectItem value="Amarelo">Amarelo</SelectItem>
-                  <SelectItem value="Indígena">Indígena</SelectItem>
-                  <SelectItem value="Prefiro nao informar">Prefiro não informar</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.raca && <p className="text-sm text-red-500">{errors.raca}</p>}
-            </div>
-
-            <div className="md:col-span-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="pessoa_deficiencia"
-                  checked={formData.pessoa_deficiencia}
-                  onCheckedChange={(checked) => handleInputChange("pessoa_deficiencia", checked)}
-                />
-                <Label htmlFor="pessoa_deficiencia" className="text-sm">
-                  Sou pessoa com deficiência
-                </Label>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Dados Socioeconômicos 
-        <Card className="border border-slate-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <DollarSign className="w-5 h-5 text-green-600" />
-              Situação Socioeconômica
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="renda_familiar">Renda Familiar Mensal (R$) *</Label>
-              <Input
-                id="renda_familiar"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.renda_familiar}
-                onChange={(e) => handleInputChange("renda_familiar", e.target.value)}
-                className={errors.renda_familiar ? "border-red-500" : ""}
-                placeholder="Ex: 2500.00"
-              />
-              {errors.renda_familiar && <p className="text-sm text-red-500">{errors.renda_familiar}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="membros_familia">Membros da Família</Label>
-              <Input
-                id="membros_familia"
-                type="number"
-                min="1"
-                value={formData.membros_familia}
-                onChange={(e) => handleInputChange("membros_familia", e.target.value)}
-                placeholder="Ex: 4 (padrão)"
-              />
-            </div>
-          </CardContent>
-        </Card>*/}
-
-        {/* Dados Acadêmicos*/}
+        {/* Dados */}
         <Card className="border-0 shadow-lg bg-white dark:bg-slate-900/80 dark:shadow-black/50 dark:ring-1 dark:ring-slate-800/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg text-slate-900 dark:text-slate-100">
               <GraduationCap className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              Dados Acadêmicos
+              Notas
             </CardTitle>
           </CardHeader>
           <CardContent className="grid md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="nota_enem">Nota Média do ENEM *</Label>
+              <Label htmlFor="nota_ct">Ciências da Natureza *</Label>
               <Input
-                id="nota_enem"
+                id="nota_ct"
                 type="number"
                 min="0"
                 max="1000"
                 step="0.1"
-                value={formData.nota_enem}
-                onChange={(e) => handleInputChange("nota_enem", e.target.value)}
-                className={errors.nota_enem ? "border-red-500" : ""}
+                value={formData.nota_ct}
+                onChange={(e) => handleInputChange("nota_ct", e.target.value)}
+                className={errors.nota_ct ? "border-red-500" : ""}
                 placeholder="Ex: 650.5"
               />
-              {errors.nota_enem && <p className="text-sm text-red-500">{errors.nota_enem}</p>}
+              {errors.nota_ct && <p className="text-sm text-red-500">{errors.nota_ct}</p>}
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="tipo_escola">Tipo de Escola (Ensino Médio) *</Label>
-              <Select value={formData.tipo_escola} onValueChange={(value) => handleInputChange("tipo_escola", value)}>
-                <SelectTrigger className={errors.tipo_escola ? "border-red-500" : ""}>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Publica">Escola Pública</SelectItem>
-                  <SelectItem value="Privada">Escola Privada</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.tipo_escola && <p className="text-sm text-red-500">{errors.tipo_escola}</p>}
+              <Label htmlFor="nota_ch">Ciências Humanas *</Label>
+              <Input
+                id="nota_ch"
+                type="number"
+                min="0"
+                max="1000"
+                step="0.1"
+                value={formData.nota_ch}
+                onChange={(e) => handleInputChange("nota_ch", e.target.value)}
+                className={errors.nota_ch ? "border-red-500" : ""}
+                placeholder="Ex: 650.5"
+              />
+              {errors.nota_ch && <p className="text-sm text-red-500">{errors.nota_ch}</p>}
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="turno_pretendido">Turno Pretendido</Label>
-              <Select value={formData.turno_pretendido} onValueChange={(value) => handleInputChange("turno_pretendido", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o turno" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Matutino">Matutino</SelectItem>
-                  <SelectItem value="Vespertino">Vespertino</SelectItem>
-                  <SelectItem value="Noturno">Noturno</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="nota_lc">Linguagens e Códigos *</Label>
+              <Input
+                id="nota_lc"
+                type="number"
+                min="0"
+                max="1000"
+                step="0.1"
+                value={formData.nota_lc}
+                onChange={(e) => handleInputChange("nota_lc", e.target.value)}
+                className={errors.nota_lc ? "border-red-500" : ""}
+                placeholder="Ex: 650.5"
+              />
+              {errors.nota_lc && <p className="text-sm text-red-500">{errors.nota_lc}</p>}
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="curso_pretendido">Curso de Interesse</Label>
-              <Select value={formData.curso_pretendido} onValueChange={(value) => handleInputChange("curso_pretendido", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o curso" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CURSOS_POPULARES.map((curso) => (
-                    <SelectItem key={curso} value={curso}>{curso}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="nota_mt">Matemática *</Label>
+              <Input
+                id="nota_mt"
+                type="number"
+                min="0"
+                max="1000"
+                step="0.1"
+                value={formData.nota_mt}
+                onChange={(e) => handleInputChange("nota_mt", e.target.value)}
+                className={errors.nota_mt ? "border-red-500" : ""}
+                placeholder="Ex: 650.5"
+              />
+              {errors.nota_mt && <p className="text-sm text-red-500">{errors.nota_mt}</p>}
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="nota_redacao">Redação *</Label>
+              <Input
+                id="nota_redacao"
+                type="number"
+                min="0"
+                max="1000"
+                step="0.1"
+                value={formData.nota_redacao}
+                onChange={(e) => handleInputChange("nota_redacao", e.target.value)}
+                className={errors.nota_redacao ? "border-red-500" : ""}
+                placeholder="Ex: 800"
+              />
+              {errors.nota_redacao && <p className="text-sm text-red-500">{errors.nota_redacao}</p>}
             </div>
           </CardContent>
         </Card>
 
-        {/* Localização */}
+        {/* Informações do Curso Pretendido */}
         <Card className="border-0 shadow-lg bg-white dark:bg-slate-900/80 dark:shadow-black/50 dark:ring-1 dark:ring-slate-800/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg text-slate-900 dark:text-slate-100">
-              <MapPin className="w-5 h-5 text-red-600 dark:text-red-400" />
-              Localização
+              <GraduationCap className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              Informações do Curso Pretendido
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="estado">Estado onde pretende estudar</Label>
-                <Select value={formData.estado} onValueChange={(value) => handleInputChange("estado", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o estado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ESTADOS_BRASIL.map((estado) => (
-                      <SelectItem key={estado} value={estado}>{estado}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Select de município dependente do estado selecionado - só mostra quando estado estiver selecionado */}
-              {formData.estado && (
-                <div className="space-y-2">
-                  <Label htmlFor="municipio">Município</Label>
-                  <Select
-                    value={formData.municipio}
-                    onValueChange={(value) => handleInputChange("municipio", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o município" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(MUNICIPIOS_BY_ESTADO[formData.estado] || []).map((mun) => (
-                        <SelectItem key={mun} value={mun}>{mun}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.municipio && <p className="text-sm text-red-500">{errors.municipio}</p>}
-                </div>
-              )}
+          <CardContent className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="instituicao">Instituição *</Label>
+              <Select onValueChange={(value) => handleInputChange("instituicao", value)} value={formData.instituicao}>
+                <SelectTrigger className={errors.instituicao ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Selecione a instituição" />
+                </SelectTrigger>
+                <SelectContent>
+                  {INSTITUICOES_SIGLAS.map(sigla => (
+                    <SelectItem key={sigla} value={sigla}>{sigla}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.instituicao && <p className="text-sm text-red-500">{errors.instituicao}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="nome_curso">Nome do Curso *</Label>
+              <Select onValueChange={(value) => handleInputChange("nome_curso", value)} value={formData.nome_curso}>
+                <SelectTrigger className={errors.nome_curso ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Selecione o curso" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CURSOS_POPULARES.map(curso => (
+                    <SelectItem key={curso} value={curso}>{curso}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.nome_curso && <p className="text-sm text-red-500">{errors.nome_curso}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="grau">Grau *</Label>
+              <Select onValueChange={(value) => handleInputChange("grau", value)} value={formData.grau}>
+                <SelectTrigger className={errors.grau ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Selecione o grau" />
+                </SelectTrigger>
+                <SelectContent>
+                  {GRAUS.map(grau => (
+                    <SelectItem key={grau} value={grau}>{grau}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.grau && <p className="text-sm text-red-500">{errors.grau}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="turno">Turno *</Label>
+              <Select onValueChange={(value) => handleInputChange("turno", value)} value={formData.turno}>
+                <SelectTrigger className={errors.turno ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Selecione o turno" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TURNOS.map(turno => (
+                    <SelectItem key={turno} value={turno}>{turno}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.turno && <p className="text-sm text-red-500">{errors.turno}</p>}
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="modalidade">Modalidade *</Label>
+              <Select onValueChange={(value) => handleInputChange("modalidade", value)} value={formData.modalidade}>
+                <SelectTrigger className={errors.modalidade ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Selecione a modalidade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Cota">Cota</SelectItem>
+                  <SelectItem value="Ampla Concorrência">Ampla Concorrência</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.modalidade && <p className="text-sm text-red-500">{errors.modalidade}</p>}
             </div>
           </CardContent>
         </Card>

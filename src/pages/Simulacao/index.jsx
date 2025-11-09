@@ -15,64 +15,55 @@ export default function SimulacaoPage() {
   const handleSubmitFormulario = async (dados) => {
     setDadosSimulacao(dados);
     setEtapa("processamento");
-    
-    // Simular processamento
+
     setTimeout(async () => {
-      const pontuacao = calcularElegibilidade(dados);
-      const elegivel = pontuacao >= 60;
+      const { mediaEnem, selecionado, posicao, vagas } = calcularResultado(dados);
       
       const novoResultado = {
         ...dados,
-        resultado_elegivel: elegivel,
-        pontuacao_calculada: pontuacao
+        mediaEnem,
+        selecionado,
+        posicao,
+        vagas,
+        // Hardcoded para o layout
+        ingresso: "1º Semestre", 
+        link_instituicao: "#",
       };
 
-      // Salvar no banco
-      await Simulacao.create(novoResultado);
+      // Salvar no banco (opcional, mantendo a estrutura)
+      await Simulacao.create({
+        ...novoResultado,
+        resultado_elegivel: selecionado,
+        pontuacao_calculada: mediaEnem,
+      });
       
       setResultado(novoResultado);
       setEtapa("resultado");
     }, 3000);
   };
 
-  const calcularElegibilidade = (dados) => {
-    let pontuacao = 0;
+  const calcularResultado = (dados) => {
+    const mediaEnem = (
+      dados.nota_lc +
+      dados.nota_mt +
+      dados.nota_ch +
+      dados.nota_ct +
+      dados.nota_redacao
+    ) / 5;
 
-    // Critério renda (peso alto)
-    const salarioMinimo = 1212; // valor aproximado de 2017
-    const rendaPerCapita = dados.renda_familiar / (dados.membros_familia || 4);
+    const selecionado = mediaEnem >= dados.nota_minima;
+    const vagas = 10; // Mock
+    let posicao;
+
+    if (selecionado) {
+      // Se selecionado, gera uma posição dentro do número de vagas
+      posicao = Math.floor(Math.random() * vagas) + 1;
+    } else {
+      // Se não, gera uma posição acima do número de vagas
+      posicao = vagas + Math.floor(Math.random() * 10) + 1;
+    }
     
-    if (rendaPerCapita <= salarioMinimo * 1.5) {
-      pontuacao += 30;
-    } else if (rendaPerCapita <= salarioMinimo * 3) {
-      pontuacao += 20;
-    }
-
-    // Critério nota ENEM
-    if (dados.nota_enem >= 600) {
-      pontuacao += 25;
-    } else if (dados.nota_enem >= 500) {
-      pontuacao += 15;
-    } else if (dados.nota_enem >= 450) {
-      pontuacao += 10;
-    }
-
-    // Critério escola pública
-    if (dados.tipo_escola === "Publica") {
-      pontuacao += 20;
-    }
-
-    // Critério idade (jovens têm preferência)
-    if (dados.idade <= 25) {
-      pontuacao += 10;
-    }
-
-    // Critério pessoa com deficiência
-    if (dados.pessoa_deficiencia) {
-      pontuacao += 15;
-    }
-
-    return Math.min(pontuacao, 100);
+    return { mediaEnem, selecionado, posicao, vagas };
   };
 
   const reiniciarSimulacao = () => {
@@ -97,12 +88,12 @@ export default function SimulacaoPage() {
             <h1 className="text-4xl font-bold text-slate-900 dark:text-slate-100 mb-4">
               {etapa === "formulario" && "Preencha seus dados para análise"}
               {etapa === "processamento" && "Analisando seu perfil"}
-              {etapa === "resultado" && "Resultado da sua simulação"}
+              {etapa === "resultado" && "Resultado da Análise"}
             </h1>
             <p className="text-lg text-slate-600 dark:text-slate-300">
               {etapa === "formulario" && "Informe seus dados acadêmicos e pessoais para verificarmos sua elegibilidade"}
               {etapa === "processamento" && "Estamos comparando seu perfil com dados históricos do ProUni"}
-              {etapa === "resultado" && "Confira o resultado da análise baseada em dados oficiais"}
+              {etapa === "resultado" && "Informe seus dados acadêmicos e pessoais para verificarmos sua elegibilidade"}
             </p>
           </div>
         </div>
