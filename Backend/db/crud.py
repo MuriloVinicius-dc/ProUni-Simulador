@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
 from typing import List, Optional, Any
-from sqlalchemy import func, case 
+from sqlalchemy import func, case, or_
 
 
 def get_curso_by_name(db: Session, nome_curso: str) -> Optional[models.Curso]:
@@ -143,22 +143,27 @@ def authenticate_candidato(db:Session, email:str, senha:str) -> Optional[models.
 
 def get_or_create_instituicao(db: Session, instituicao_data: schemas.InstituicaoCreate) -> models.Instituicao:
     """
-    Busca uma Instituição existente pela sigla e modalidade ou a cria se não existir.
+    Busca uma Instituição existente pela sigla (chave única) e a cria se não existir.
     """
     
+    # 1. Busca pela SIGLA (Campo Único)
     db_instituicao = db.query(models.Instituicao).filter(
-        (models.Instituicao.sigla == instituicao_data.sigla),
-        (models.Instituicao.modalidade == instituicao_data.modalidade)
+        func.lower(models.Instituicao.sigla) == func.lower(instituicao_data.sigla)
     ).first()
     
     if db_instituicao:
+        
+        if instituicao_data.modalidade and (db_instituicao.modalidade != instituicao_data.modalidade):
+            db_instituicao.modalidade = instituicao_data.modalidade
+            db.add(db_instituicao)
+            db.flush()
+            
         return db_instituicao
     
     db_instituicao = models.Instituicao(**instituicao_data.model_dump())
     db.add(db_instituicao)
     db.flush() 
     return db_instituicao
-
 
 def get_or_create_curso(db: Session, curso: schemas.CursoCreate, instituicao_id: int) -> models.Curso:
     """Busca um Curso existente ou o cria. Remove modalidade da busca/criação e inclui pesos."""
@@ -231,23 +236,25 @@ def update_candidato_complementary_data(
     """
     Insere ou atualiza os dados de Nota, Instituição e Curso de interesse para um candidato existente.
     """
-    db_candidato = get_candidato(db, candidato_id)
+    db_candidato = get_candidato(db, candidato_id) 
     if not db_candidato:
         raise Exception("Candidato não encontrado.")
 
     db_instituicao = get_or_create_instituicao(db, data.instituicao)
 
-    db_curso = db.query(models.Curso).join(models.Instituicao).filter(
-        models.Curso.nome_curso == data.curso.nome_curso,
+ 
+    db_curso = db.query(models.Curso).filter(
+        func.lower(models.Curso.nome_curso) == func.lower(data.curso.nome_curso),
         models.Curso.ID_instituicao == db_instituicao.ID,
-        models.Curso.grau == data.curso.grau,
-        models.Curso.turno == data.curso.turno
+        func.lower(models.Curso.grau) == func.lower(data.curso.grau),
+        func.lower(models.Curso.turno) == func.lower(data.curso.turno)
     ).first()
 
     if not db_curso:
+
         raise Exception(
-            f"O curso '{data.curso.nome_curso}' na instituição '{db_instituicao.sigla}' não está cadastrado "
-            "com esses parâmetros (Grau/Turno/Modalidade da Instituição)."
+            f"O curso '{data.curso.nome_curso}' não foi encontrado. "
+            f"Verifique se o curso está cadastrado na Instituição ('{db_instituicao.sigla}') com o Grau ('{data.curso.grau}') e Turno ('{data.curso.turno}') corretos."
         )
 
     db_nota = db.query(models.Nota).filter(models.Nota.ID_Candidato == candidato_id).first()
@@ -260,9 +267,8 @@ def update_candidato_complementary_data(
     else:
         db_nota = models.Nota(**nota_dict, ID_Candidato=candidato_id)
         db.add(db_nota)
-        db.flush()
-        db.refresh(db_nota)
-
+        db.flush() 
+        
     db_inscricao = db.query(models.Inscricao).filter(models.Inscricao.ID_Candidato == candidato_id).first()
 
     inscricao_data = {
@@ -270,7 +276,7 @@ def update_candidato_complementary_data(
         "modalidade": data.nota.modalidade_concorrencia,
         "ID_Candidato": candidato_id,
         "ID_curso": db_curso.ID,
-        "ID_nota": db_nota.ID_Nota
+        "ID_nota": db_nota.ID_Nota 
     }
 
     if db_inscricao:
@@ -280,7 +286,6 @@ def update_candidato_complementary_data(
         db_inscricao = models.Inscricao(**inscricao_data)
         db.add(db_inscricao)
 
-
     try:
         db.commit()
         db.refresh(db_candidato)
@@ -289,8 +294,7 @@ def update_candidato_complementary_data(
     except Exception as e:
         db.rollback()
         raise Exception(f"Erro ao salvar dados complementares. Detalhe: {e}")
-
-
+    
 def create_candidatos_lote(db: Session, candidatos_lote: schemas.LoteCandidatos):
     """
     Insere múltiplos candidatos e TODAS as suas dependências em uma transação atômica.
