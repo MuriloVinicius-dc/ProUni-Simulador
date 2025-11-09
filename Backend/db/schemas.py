@@ -76,7 +76,7 @@ class CandidatoBase(BaseModel):
     nome: str = Field(..., max_length=100)
     email: EmailStr 
     idade: Optional[int] = Field(None, ge=15, le=100)
-    sexo: Optional[str] = Field(None, max_length=1)
+    sexo: Optional[str] = Field(None, max_length=9)
 
 class CandidatoCreate(CandidatoBase):
     """Schema para o POST/criação, inclui a senha."""
