@@ -96,7 +96,7 @@ export function AuthForm({
               className={`flex h-10 w-full items-center rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none ${styles.input} ${styles.select}`}
               aria-label="Sexo"
             >
-              <option value="">Prefiro não informar</option>
+              <option value="">Selecione</option>
               <option value="M">Masculino</option>
               <option value="F">Feminino</option>
               <option value="O">Outro</option>
