@@ -64,7 +64,11 @@ export const AuthProvider = ({ children }) => {
       // A API retorna { access_status: "success", candidato: {...} }
       if (response.access_status === 'success' && response.candidato) {
         const candidato = response.candidato
-        const userData = { ...candidato, id: candidato.ID }
+        const userData = { 
+          ...candidato, 
+          id: candidato.ID,
+          candidato_id: candidato.ID // Adiciona candidato_id explicitamente para uso na API
+        }
         setUser(userData)
         setSession({ user: userData })
         localStorage.setItem('user', JSON.stringify(userData))
@@ -94,7 +98,13 @@ export const AuthProvider = ({ children }) => {
         sexo: metadata.sexo,
       }
       const candidato = await authService.cadastrar(candidatoData)
-      return { user: candidato }
+      // Adiciona candidato_id após cadastro
+      const userData = {
+        ...candidato,
+        id: candidato.ID,
+        candidato_id: candidato.ID
+      }
+      return { user: userData }
     }
 
     // Usa Supabase
