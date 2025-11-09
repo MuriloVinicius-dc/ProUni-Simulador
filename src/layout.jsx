@@ -1,16 +1,42 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, Outlet } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { GraduationCap, BarChart3, Home } from "lucide-react";
+import { GraduationCap, BarChart3, Home, LogOut, User } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 
-export default function Layout({ children, currentPageName }) {
+export default function Layout() {
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   const navigationItems = [
     { name: "Dashboard", icon: Home, url: createPageUrl("Dashboard") },
     { name: "Simulação", icon: BarChart3, url: createPageUrl("Simulacao") }
   ];
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
+  };
+
+  const getUserDisplayName = () => {
+    if (user?.user_metadata?.full_name) {
+      return user.user_metadata.full_name;
+    }
+    if (user?.email) {
+      return user.email.split('@')[0];
+    }
+    return 'Usuário';
+  };
+
+  const getUserInitials = () => {
+    const name = getUserDisplayName();
+    return name.charAt(0).toUpperCase();
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
@@ -43,7 +69,32 @@ export default function Layout({ children, currentPageName }) {
                   <span className="hidden sm:block font-medium text-sm">{item.name}</span>
                 </Link>
               ))}
+              
               <ThemeToggle />
+              
+              {/* User menu */}
+              <div className="flex items-center gap-2 ml-2 pl-2 border-l border-slate-200 dark:border-slate-800">
+                <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl">
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-sm font-semibold">
+                      {getUserInitials()}
+                    </span>
+                  </div>
+                  <span className="hidden md:block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    {getUserDisplayName()}
+                  </span>
+                </div>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400"
+                  title="Sair"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
             </nav>
           </div>
         </div>
@@ -51,7 +102,7 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Conteúdo principal */}
       <main className="pt-20">
-        {children}
+        <Outlet />
       </main>
     </div>
   );

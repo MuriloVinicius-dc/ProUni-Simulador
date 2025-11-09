@@ -56,4 +56,14 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Hide scrollbar while maintaining scroll functionality */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  
+  body {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
