@@ -10,6 +10,10 @@ def get_curso_by_name(db: Session, nome_curso: str) -> Optional[models.Curso]:
         func.lower(models.Curso.nome_curso) == func.lower(nome_curso)
     ).first()
 
+def get_candidatos(db: Session, skip:int = 0, limit: int=100) -> List[models.Candidato]:
+    """Retorna uma lista paginada de todos os candidatos."""
+    return db.query(models.Candidato).offset(skip).limit(limit).all()
+
 def get_cursos(db: Session, skip: int = 0, limit: int = 100) -> List[models.Curso]:
     """Retorna uma lista paginada de todos os cursos cadastrados."""
     return db.query(models.Curso).offset(skip).limit(limit).all()
@@ -198,9 +202,6 @@ def create_candidato(db:Session, candidato:schemas.CandidatoCreate):
              raise Exception("Email já cadastrado.")
         raise 
         
-def get_candidatos(db:Session, skip:int = 0, limit: int =100) -> List[models.Candidato]:
-    return db.query(models.Candidato).offset(skip).limit(limit).all()
-
 def get_candidato(db: Session, candidato_id: int) -> Optional[models.Candidato]:
     return db.query(models.Candidato).filter(models.Candidato.ID == candidato_id).first()
 
@@ -249,7 +250,6 @@ def update_candidato_complementary_data(
             "com esses parâmetros (Grau/Turno/Modalidade da Instituição)."
         )
 
-    # 3. Nota 
     db_nota = db.query(models.Nota).filter(models.Nota.ID_Candidato == candidato_id).first()
     
     nota_dict = data.nota.model_dump(exclude={"modalidade_concorrencia"}) 
@@ -260,6 +260,8 @@ def update_candidato_complementary_data(
     else:
         db_nota = models.Nota(**nota_dict, ID_Candidato=candidato_id)
         db.add(db_nota)
+        db.flush()
+        db.refresh(db_nota)
 
     db_inscricao = db.query(models.Inscricao).filter(models.Inscricao.ID_Candidato == candidato_id).first()
 

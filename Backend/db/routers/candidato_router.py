@@ -24,6 +24,54 @@ def cadastro_endpoint(candidato: schemas.CandidatoCreate, db: Session = DbDepend
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email já cadastrado.")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
+@router.get(
+        "/candidatos/",
+        response_model=List[schemas.Candidato],
+        summary="Lista de todos os candidatos cadastrados",
+        tags=["Administração e teste"]
+)
+
+def list_candidatos_endpoint(
+    db:Session = DbDependency,
+    skip:int = Query(0, ge=0, description="Números de registros"),
+    limit: int = Query(100, le=100, description="Número máximo de registro por página")
+):
+    """Retorna lista de todos os candidatos no sistema"""
+    candidatos = crud.get_candidatos(db,skip=skip, limit=limit)
+    return candidatos
+
+@router.put(
+        "/candidatos/{candidato_id}",
+        response_model=schemas.Candidato,
+        summary="Atualiza dados de um candidato"
+)
+
+def update_candidato_endpoint(
+    candidato_id:int,
+    candidato_data : schemas.CandidatoBase,
+    db:Session = DbDependency
+):
+    """Atualiza dados de um candidato"""
+    try:
+        updated_candidato = crud.update_candidato(db,candidato_id, candidato_data)
+
+        if updated_candidato is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Candidato não encontrado"
+            )
+        return updated_candidato
+    
+    except Exception as e:
+        detail_msg = str(e)
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+
+        if "Candidato não encontrado" in detail_msg:
+            status_code = status.HTTP_404_NOT_FOUND
+        elif "O novo e-mail fornecido já está em uso" in detail_msg:
+            status_code = status.HTTP_409_CONFLICT
+        raise HTTPException(status_code=status_code, detail=detail_msg)
+
 @router.post(
     "/login", 
     status_code=status.HTTP_200_OK, 
@@ -173,7 +221,7 @@ def get_curso_detail_endpoint(
         )
     return db_curso
 
-@router.post("/candidatos/lote/", status_code=status.HTTP_201_CREATED, summary="Insere dados de teste em lote")
+@router.post("/dados/lote/", status_code=status.HTTP_201_CREATED, summary="Insere dados de teste em lote")
 def create_candidatos_lote_endpoint(lote: schemas.LoteCandidatos, db: Session = DbDependency):
     try:
         return crud.create_candidatos_lote(db=db, candidatos_lote=lote)
