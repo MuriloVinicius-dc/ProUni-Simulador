@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from db import models, schemas
+from backend.db import models, schemas
 from typing import List, Optional, Any
 from sqlalchemy import func, case 
 
@@ -10,38 +10,98 @@ def get_curso_by_name(db: Session, nome_curso: str) -> Optional[models.Curso]:
         func.lower(models.Curso.nome_curso) == func.lower(nome_curso)
     ).first()
 
+def get_cursos(db: Session, skip: int = 0, limit: int = 100) -> List[models.Curso]:
+    """Retorna uma lista paginada de todos os cursos cadastrados."""
+    return db.query(models.Curso).offset(skip).limit(limit).all()
+
+def get_curso_by_id(db: Session, curso_id: int) -> Optional[models.Curso]:
+    """Busca um curso no banco de dados pelo ID."""
+    return db.query(models.Curso).filter(models.Curso.ID == curso_id).first()
+
+def create_curso_individual(
+    db: Session, 
+    curso_data: schemas.CursoCreate, 
+    instituicao_data: schemas.InstituicaoCreate
+) -> models.Curso:
+    """
+    Cria ou busca uma Instituição e, em seguida, cria um Curso individualmente.
+    Garante que o curso (nome, grau, turno, instituição) seja único.
+    """
+    try:
+        
+        db_instituicao = get_or_create_instituicao(db, instituicao_data)
+        
+        instituicao_id = db_instituicao.ID
+        
+        db_curso = db.query(models.Curso).filter(
+            models.Curso.nome_curso == curso_data.nome_curso,
+            models.Curso.ID_instituicao == instituicao_id,
+            models.Curso.grau == curso_data.grau,
+            models.Curso.turno == curso_data.turno 
+        ).first()
+
+        if db_curso:
+            raise Exception("Este curso já está cadastrado nesta instituição, grau e turno.")
+            
+        curso_dict = curso_data.model_dump()
+        
+        # Remove 'modalidade' se ainda estiver no CursoCreate
+        if 'modalidade' in curso_dict:
+            del curso_dict['modalidade']
+            
+        db_curso = models.Curso(
+            **curso_dict,
+            ID_instituicao=instituicao_id
+        )
+        db.add(db_curso)
+        db.commit()
+        db.refresh(db_curso)
+        return db_curso
+
+    except Exception as e:
+        db.rollback()
+        raise e
+
 def calcular_aprovacao(db:Session, candidato_id: int, curso_id: int):
     """
-    Calcula se a nota média do candidato é suficiente para a nota mínima do curso,
-    realizando o cálculo da média diretamente no banco de dados.
+    Calcula se a nota Média Ponderada do candidato é suficiente para a nota mínima do curso.
     """
     
-    subquery_nota_candidato = db.query(
-        models.Nota,
-        ((models.Nota.nota_ct + models.Nota.nota_ch + models.Nota.nota_lc + models.Nota.nota_mt + models.Nota.nota_redacao) / 5.0).label('nota_candidato_media')
-    ).filter(models.Nota.ID_Candidato == candidato_id).subquery()
-    
-    
-    resultado_query = db.query(
-        subquery_nota_candidato.c.nota_candidato_media,
-        models.Curso.nome_curso,
-        models.Curso.nota_minima
-    ).join(
-        models.Curso,
+    db_nota = db.query(models.Nota).filter(
+        models.Nota.ID_Candidato == candidato_id
+    ).first()
+
+    db_curso = db.query(models.Curso).filter(
         models.Curso.ID == curso_id
     ).first()
 
-    if not resultado_query:
-        db_curso = db.query(models.Curso).filter(models.Curso.ID == curso_id).first()
-        if not db_curso:
-            return {"aprovado": False, "mensagem": "Curso de interesse não encontrado."}
-        else:
-            return {"aprovado": False, "mensagem": "Nota do candidato não encontrada para este curso."}
-        
+    if not db_nota or not db_curso:
+        return {"aprovado": False, "mensagem": "Dados insuficientes para calcular a aprovação (Candidato/Notas/Curso não encontrados)."}
+
     
-    nota_candidato = resultado_query.nota_candidato_media
-    nota_minima_corte = resultado_query.nota_minima
-    curso_nome = resultado_query.nome_curso
+    numerador = (
+        (db_nota.nota_ct * db_curso.peso_ct) +
+        (db_nota.nota_ch * db_curso.peso_ch) +
+        (db_nota.nota_lc * db_curso.peso_lc) +
+        (db_nota.nota_mt * db_curso.peso_mt) +
+        (db_nota.nota_redacao * db_curso.peso_redacao)
+    )
+
+    denominador = (
+        db_curso.peso_ct + 
+        db_curso.peso_ch + 
+        db_curso.peso_lc + 
+        db_curso.peso_mt + 
+        db_curso.peso_redacao
+    )
+    
+    if denominador == 0:
+        return {"aprovado": False, "mensagem": "Erro de configuração: A soma dos pesos do curso é zero."}
+
+    nota_candidato = numerador / denominador
+    
+    nota_minima_corte = db_curso.nota_minima
+    curso_nome = db_curso.nome_curso
 
     aprovado = nota_candidato >= nota_minima_corte
     diferenca = nota_candidato - nota_minima_corte
@@ -55,56 +115,12 @@ def calcular_aprovacao(db:Session, candidato_id: int, curso_id: int):
     }
 
     if aprovado:
-        resultado["mensagem"] = f"Parabéns! Sua nota ({resultado['nota_candidato']}) é suficiente para o curso de {resultado['curso']}."
+        resultado["mensagem"] = f"Parabéns! Sua Média Ponderada ({resultado['nota_candidato']}) é suficiente para o curso de {resultado['curso']}."
     else:
-        resultado["mensagem"] = f"Sua nota ({resultado['nota_candidato']}) está abaixo da nota de corte ({resultado['nota_minima_corte']}) por {abs(resultado['diferenca'])} pontos."
+        resultado["mensagem"] = f" Sua Média Ponderada ({resultado['nota_candidato']}) está abaixo da nota de corte ({resultado['nota_minima_corte']}) por {abs(resultado['diferenca'])} pontos."
 
     return resultado
 
-def get_aprovados_by_curso(db: Session, curso_id: int) -> List[schemas.AprovadoResponse]:
-    
-    # 1. Obter o curso e sua nota de corte
-    db_curso = db.query(models.Curso).filter(models.Curso.ID == curso_id).first()
-    if not db_curso:
-        # Se o curso não existe, a rota vai lançar 404. Retorna lista vazia aqui.
-        return []
-
-    nota_minima_corte = db_curso.nota_minima
-    
-    # 2. Obter as inscrições para o curso específico
-    # Percorrendo as Inscrições é mais simples do que fazer um join complexo
-    inscricoes = db.query(models.Inscricao).filter(models.Inscricao.ID_curso == curso_id).all()
-    
-    aprovados = []
-    
-    for inscricao in inscricoes:
-        # Pelo relacionamento, podemos acessar o candidato e a nota
-        db_nota = inscricao.nota
-        db_candidato = inscricao.candidato
-
-        if db_nota:
-            # Calcular a nota final do candidato (média simples)
-            notas = [
-                db_nota.nota_ct,
-                db_nota.nota_ch,
-                db_nota.nota_lc,
-                db_nota.nota_mt,
-                db_nota.nota_redacao
-            ]
-            nota_candidato = sum(notas) / len(notas)
-            
-            # 3. Verificar aprovação
-            if nota_candidato >= nota_minima_corte:
-                # Cria um dicionário para ser validado pelo Pydantic no retorno
-                aprovados.append({
-                    "ID": db_candidato.ID,
-                    "nome": db_candidato.nome,
-                    "email": db_candidato.email,
-                    "nota_final": round(nota_candidato, 2),
-                    "nota_de_corte": round(nota_minima_corte, 2)
-                })
-
-    return aprovados
 
 def get_candidato_by_email(db:Session, email:str) -> Optional[models.Candidato]:
     return db.query(models.Candidato).filter(models.Candidato.email == email).first()
@@ -122,10 +138,13 @@ def authenticate_candidato(db:Session, email:str, senha:str) -> Optional[models.
     return None
 
 def get_or_create_instituicao(db: Session, instituicao_data: schemas.InstituicaoCreate) -> models.Instituicao:
-    """Busca uma Instituição existente pela sigla ou a cria se não existir."""
+    """
+    Busca uma Instituição existente pela sigla e modalidade ou a cria se não existir.
+    """
     
     db_instituicao = db.query(models.Instituicao).filter(
-        (models.Instituicao.sigla == instituicao_data.sigla)
+        (models.Instituicao.sigla == instituicao_data.sigla),
+        (models.Instituicao.modalidade == instituicao_data.modalidade)
     ).first()
     
     if db_instituicao:
@@ -138,11 +157,12 @@ def get_or_create_instituicao(db: Session, instituicao_data: schemas.Instituicao
 
 
 def get_or_create_curso(db: Session, curso: schemas.CursoCreate, instituicao_id: int) -> models.Curso:
+    """Busca um Curso existente ou o cria. Remove modalidade da busca/criação e inclui pesos."""
+    
     db_curso = db.query(models.Curso).filter(
         models.Curso.nome_curso == curso.nome_curso,
         models.Curso.ID_instituicao == instituicao_id,
         models.Curso.grau == curso.grau,
-        models.Curso.modalidade == curso.modalidade,
         models.Curso.turno == curso.turno 
     ).first()
 
@@ -150,6 +170,9 @@ def get_or_create_curso(db: Session, curso: schemas.CursoCreate, instituicao_id:
         return db_curso
 
     curso_dict = curso.model_dump()
+    if 'modalidade' in curso_dict: 
+        del curso_dict['modalidade']
+        
     db_curso = models.Curso(
         **curso_dict,
         ID_instituicao=instituicao_id
@@ -161,6 +184,7 @@ def get_or_create_curso(db: Session, curso: schemas.CursoCreate, instituicao_id:
 
 
 def create_candidato(db:Session, candidato:schemas.CandidatoCreate):
+    """Cria um candidato para a Página de Cadastro."""
     db_candidato = models.Candidato(**candidato.model_dump())
     
     try:
@@ -173,7 +197,7 @@ def create_candidato(db:Session, candidato:schemas.CandidatoCreate):
         if "UNIQUE constraint failed: candidato.email" in str(e):
              raise Exception("Email já cadastrado.")
         raise 
-
+        
 def get_candidatos(db:Session, skip:int = 0, limit: int =100) -> List[models.Candidato]:
     return db.query(models.Candidato).offset(skip).limit(limit).all()
 
@@ -200,16 +224,78 @@ def delete_candidato(db: Session, candidato_id: int):
         return {"detail": "Candidato deletado com sucesso"}
     return None
 
+def update_candidato_complementary_data(
+    db: Session, candidato_id: int, data: schemas.DadosComplementaresRequest
+) -> models.Candidato:
+    """
+    Insere ou atualiza os dados de Nota, Instituição e Curso de interesse para um candidato existente.
+    """
+    db_candidato = get_candidato(db, candidato_id)
+    if not db_candidato:
+        raise Exception("Candidato não encontrado.")
+
+    db_instituicao = get_or_create_instituicao(db, data.instituicao)
+
+    db_curso = db.query(models.Curso).join(models.Instituicao).filter(
+        models.Curso.nome_curso == data.curso.nome_curso,
+        models.Curso.ID_instituicao == db_instituicao.ID,
+        models.Curso.grau == data.curso.grau,
+        models.Curso.turno == data.curso.turno
+    ).first()
+
+    if not db_curso:
+        raise Exception(
+            f"O curso '{data.curso.nome_curso}' na instituição '{db_instituicao.sigla}' não está cadastrado "
+            "com esses parâmetros (Grau/Turno/Modalidade da Instituição)."
+        )
+
+    # 3. Nota 
+    db_nota = db.query(models.Nota).filter(models.Nota.ID_Candidato == candidato_id).first()
+    
+    nota_dict = data.nota.model_dump(exclude={"modalidade_concorrencia"}) 
+
+    if db_nota:
+        for key, value in nota_dict.items():
+            setattr(db_nota, key, value)
+    else:
+        db_nota = models.Nota(**nota_dict, ID_Candidato=candidato_id)
+        db.add(db_nota)
+
+    db_inscricao = db.query(models.Inscricao).filter(models.Inscricao.ID_Candidato == candidato_id).first()
+
+    inscricao_data = {
+        "ano_sisu": 2025, 
+        "modalidade": data.nota.modalidade_concorrencia,
+        "ID_Candidato": candidato_id,
+        "ID_curso": db_curso.ID,
+        "ID_nota": db_nota.ID_Nota
+    }
+
+    if db_inscricao:
+        for key, value in inscricao_data.items():
+            setattr(db_inscricao, key, value)
+    else:
+        db_inscricao = models.Inscricao(**inscricao_data)
+        db.add(db_inscricao)
+
+
+    try:
+        db.commit()
+        db.refresh(db_candidato)
+        return db_candidato
+
+    except Exception as e:
+        db.rollback()
+        raise Exception(f"Erro ao salvar dados complementares. Detalhe: {e}")
+
 
 def create_candidatos_lote(db: Session, candidatos_lote: schemas.LoteCandidatos):
     """
     Insere múltiplos candidatos e TODAS as suas dependências em uma transação atômica.
-    Removida a lógica de Inscrição.
     """
     
     for candidato_data in candidatos_lote.candidatos:
         
-        # O dict do candidato agora inclui 'raca' e exclui as dependências
         candidato_dict = candidato_data.model_dump(exclude={'nota', 'instituicao', 'curso'}) 
         db_candidato = models.Candidato(**candidato_dict)
         db.add(db_candidato) 
@@ -217,16 +303,23 @@ def create_candidatos_lote(db: Session, candidatos_lote: schemas.LoteCandidatos)
 
         db_instituicao = get_or_create_instituicao(db, candidato_data.instituicao)
 
-        # O curso_data agora inclui 'turno'
         db_curso = get_or_create_curso(db, candidato_data.curso, db_instituicao.ID)
 
-        # O dict da nota agora inclui 'modalidade'
-        nota_dict = candidato_data.nota.model_dump()
+        nota_dict = candidato_data.nota.model_dump(exclude={"modalidade_concorrencia"})
         db_nota = models.Nota(**nota_dict, ID_Candidato=db_candidato.ID)
         db.add(db_nota)
         db.flush()
 
-        # REMOVIDA A CRIAÇÃO DE INSCRICAO
+        inscricao_data = {
+            "ano_sisu": 2024,
+            "modalidade": candidato_data.nota.modalidade_concorrencia,
+            "ID_Candidato": db_candidato.ID,
+            "ID_curso": db_curso.ID,
+            "ID_nota": db_nota.ID_Nota
+        }
+        db_inscricao = models.Inscricao(**inscricao_data)
+        db.add(db_inscricao)
+
 
     try:
         db.commit() 

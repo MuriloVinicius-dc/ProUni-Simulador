@@ -9,6 +9,7 @@ class Instituicao(Base):
     nome = Column(Text, nullable=False)
     sigla = Column(Text, unique=True, nullable=False)
     localizacao_campus= Column(Text)
+    modalidade = Column(Text) 
 
     cursos = relationship("Curso", back_populates="instituicao")
 
@@ -20,9 +21,9 @@ class Candidato(Base):
     senha = Column(Text, nullable=False) 
     idade = Column(Integer)
     sexo = Column(Text)
-    raca = Column(Text)
 
     nota = relationship("Nota", back_populates="candidato", uselist=False)
+    inscricoes = relationship("Inscricao", back_populates="candidato")
 
 class Nota(Base):
     __tablename__ = "nota"
@@ -33,7 +34,6 @@ class Nota(Base):
     nota_lc = Column(REAL, nullable=False)  
     nota_mt = Column(REAL, nullable=False) 
     nota_redacao = Column(REAL, nullable=False)
-    modalidade = Column(Text, nullable=False)
 
     candidato = relationship("Candidato", back_populates="nota", uselist=False)
     inscricoes = relationship("Inscricao", back_populates="nota")
@@ -44,11 +44,17 @@ class Curso(Base):
     ID_instituicao = Column(Integer, ForeignKey("instituicao.ID"), nullable=False)
     nome_curso = Column(Text, nullable=False)
     grau = Column(Text)
-    modalidade = Column(Text)
+    turno = Column(Text) 
+    
+    peso_ct = Column(REAL, nullable=False, default=1.0)
+    peso_ch = Column(REAL, nullable=False, default=1.0)
+    peso_lc = Column(REAL, nullable=False, default=1.0)
+    peso_mt = Column(REAL, nullable=False, default=1.0)
+    peso_redacao = Column(REAL, nullable=False, default=1.0)
+
     nota_maxima = Column(REAL, nullable=False)
     nota_minima = Column(REAL, nullable=False)
-    turno = Column(Text)
-
+    
     instituicao = relationship("Instituicao", back_populates="cursos")
     inscricoes = relationship("Inscricao", back_populates="curso")
 
