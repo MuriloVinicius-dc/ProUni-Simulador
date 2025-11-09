@@ -21,7 +21,8 @@ export const authService = {
    * @returns {Promise<Object>} - Candidato criado
    */
   async cadastrar(candidatoData) {
-    const response = await api.post('/candidatos/', candidatoData)
+    // FastAPI endpoint for creating a candidate is POST /cadastro
+    const response = await api.post('/cadastro', candidatoData)
     return response
   },
 

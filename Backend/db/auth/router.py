@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from backend.db import crud, schemas
-from backend.db.database import get_db
+from .. import crud, schemas
+from ..database import get_db
 
 router = APIRouter(tags=["Autenticação"])
 DbDependency = Depends(get_db)
