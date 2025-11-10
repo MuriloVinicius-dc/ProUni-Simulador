@@ -230,6 +230,25 @@ def delete_candidato(db: Session, candidato_id: int):
         return {"detail": "Candidato deletado com sucesso"}
     return None
 
+def delete_curso(db: Session, curso_id: int) -> Optional[dict]:
+    """
+    Deleta um curso pelo ID, retornando o resultado da operação.
+    """
+    inscricoes_vinculadas = db.query(models.Inscricao).filter(models.Inscricao.ID_curso == curso_id).all()
+    
+    if inscricoes_vinculadas:
+        
+        raise ValueError("Não é possível deletar o curso pois há inscrições de candidatos vinculadas a ele. Delete as inscrições primeiro.")
+
+    db_curso = db.query(models.Curso).filter(models.Curso.ID == curso_id).first()
+    
+    if db_curso:
+        db.delete(db_curso)
+        db.commit()
+        return {"detail": f"Curso com ID {curso_id} deletado com sucesso."}
+        
+    return None
+
 def update_candidato_complementary_data(
     db: Session, candidato_id: int, data: schemas.DadosComplementaresRequest
 ) -> models.Candidato:

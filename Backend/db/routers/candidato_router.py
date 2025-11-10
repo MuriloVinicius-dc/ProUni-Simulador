@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List
-from .. import crud, models, schemas
-from ..database import get_db
+from backend.db import crud, models, schemas
+from backend.db.database import get_db
 
 router = APIRouter(tags=["Candidatos e Simulação"])
 DbDependency = Depends(get_db)
@@ -220,6 +220,32 @@ def get_curso_detail_endpoint(
             detail=f"Curso com ID {curso_id} não encontrado."
         )
     return db_curso
+
+@router.delete("/cursos/{curso_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_curso_endpoint(curso_id: int, db: Session = DbDependency):
+    """
+    Deleta um curso pelo ID.
+    Retorna 204 No Content em caso de sucesso.
+    """
+    try:
+        result = crud.delete_curso(db, curso_id)
+        if result is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail=f"Curso com ID {curso_id} não encontrado."
+            )
+        return 
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao deletar o curso: {e}"
+        )
 
 @router.post("/dados/lote/", status_code=status.HTTP_201_CREATED, summary="Insere dados de teste em lote")
 def create_candidatos_lote_endpoint(lote: schemas.LoteCandidatos, db: Session = DbDependency):
