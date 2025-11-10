@@ -45,7 +45,7 @@ const INSTITUICOES = [
 ];
 
 const TURNOS = ["Matutino", "Vespertino", "Noturno", "Integral"];
-const GRAUS = ["Bacharelado", "Licenciatura"];
+const GRAUS = ["Bachalerado", "Licenciatura"];
 
 const MUNICIPIOS_BY_ESTADO = {
   "AC": ["ACRELANDIA", "ASSIS BRASIL", "BRASILEIA", "BUJARI", "CAPIXABA", "CRUZEIRO DO SUL", "EPITACIOLANDIA", "FEIJO", "JORDAO", "MANCIO LIMA", "MANOEL URBANO", "MARECHAL THAUMATURGO", "PLACIDO DE CASTRO", "PORTO ACRE", "PORTO WALTER", "RIO BRANCO", "RODRIGUES ALVES", "SENA MADUREIRA", "SENADOR GUIOMARD", "TARAUACA", "XAPURI"],
@@ -180,6 +180,7 @@ export default function FormularioSimulacao({ onSubmit }) {
           localizacao_campus: formData.estado && formData.municipio 
             ? `${formData.municipio} - ${formData.estado}` 
             : formData.estado || null,
+          modalidade: null, // Add modalidade field as null for compatibility
         },
         curso: {
           nome_curso: formData.nome_curso,
@@ -309,7 +310,7 @@ export default function FormularioSimulacao({ onSubmit }) {
                 <SelectContent>
                   {INSTITUICOES.map(inst => (
                     <SelectItem key={inst.sigla} value={inst.sigla}>
-                      {inst.sigla} - {inst.nome}
+                      {inst.sigla}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List
-from backend.db import crud, models, schemas
-from backend.db.database import get_db
+from db import crud, models, schemas
+from db.database import get_db
 
 router = APIRouter(tags=["Candidatos e Simulação"])
 DbDependency = Depends(get_db)
@@ -108,16 +108,30 @@ def formulario_dados_complementares_endpoint(
     Necessário estar logado (ID do candidato na URL).
     """
     try:
+        # Log incoming data for debugging
+        import json
+        print(f"=== DEBUG: Received data for candidato_id={candidato_id} ===")
+        print(f"Nota: {data.nota.model_dump()}")
+        print(f"Instituicao: {data.instituicao.model_dump()}")
+        print(f"Curso: {data.curso.model_dump()}")
+        print("=" * 60)
+        
         updated_candidato = crud.update_candidato_complementary_data(db, candidato_id, data)
         return {"message": "Dados complementares salvos com sucesso", "candidato_id": updated_candidato.ID}
         
     except Exception as e:
+        import traceback
+        print(f"=== ERROR in formulario endpoint ===")
+        print(f"Error: {e}")
+        print(traceback.format_exc())
+        print("=" * 60)
+        
         detail_msg = str(e)
         status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         
         if "Candidato não encontrado" in detail_msg:
             status_code = status.HTTP_404_NOT_FOUND
-        elif "não está cadastrado" in detail_msg:
+        elif "não está cadastrado" in detail_msg or "não foi encontrado" in detail_msg:
             status_code = status.HTTP_400_BAD_REQUEST
             
         raise HTTPException(status_code=status_code, detail=detail_msg)

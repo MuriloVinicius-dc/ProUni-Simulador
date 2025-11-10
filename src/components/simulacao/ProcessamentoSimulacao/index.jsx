@@ -70,29 +70,7 @@ export default function ProcessamentoSimulacao({ dados }) {
           ))}
         </div>
 
-        <div className="bg-blue-50 dark:bg-slate-900/60 rounded-2xl p-6 mt-8 dark:ring-1 dark:ring-blue-900/30">
-          <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">
-            Dados sendo analisados:
-          </h3>
-          <div className="grid md:grid-cols-2 gap-4 text-sm">
-            <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Idade:</span>
-              <span className="font-medium text-slate-900 dark:text-slate-100">{dados.idade} anos</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Nota ENEM:</span>
-              <span className="font-medium text-slate-900 dark:text-slate-100">{dados.nota_enem}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Escola:</span>
-              <span className="font-medium text-slate-900 dark:text-slate-100">{dados.tipo_escola}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">Renda familiar:</span>
-              <span className="font-medium text-slate-900 dark:text-slate-100">R$ {dados.renda_familiar?.toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
+        
       </CardContent>
     </>
   );

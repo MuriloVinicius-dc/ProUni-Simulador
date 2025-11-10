@@ -37,12 +37,23 @@ def create_curso_individual(
         
         instituicao_id = db_instituicao.ID
         
-        db_curso = db.query(models.Curso).filter(
+        # Build query filters handling None values
+        filters = [
             models.Curso.nome_curso == curso_data.nome_curso,
-            models.Curso.ID_instituicao == instituicao_id,
-            models.Curso.grau == curso_data.grau,
-            models.Curso.turno == curso_data.turno 
-        ).first()
+            models.Curso.ID_instituicao == instituicao_id
+        ]
+        
+        if curso_data.grau is not None:
+            filters.append(models.Curso.grau == curso_data.grau)
+        else:
+            filters.append(models.Curso.grau.is_(None))
+        
+        if curso_data.turno is not None:
+            filters.append(models.Curso.turno == curso_data.turno)
+        else:
+            filters.append(models.Curso.turno.is_(None))
+        
+        db_curso = db.query(models.Curso).filter(*filters).first()
 
         if db_curso:
             raise Exception("Este curso já está cadastrado nesta instituição, grau e turno.")
@@ -168,12 +179,25 @@ def get_or_create_instituicao(db: Session, instituicao_data: schemas.Instituicao
 def get_or_create_curso(db: Session, curso: schemas.CursoCreate, instituicao_id: int) -> models.Curso:
     """Busca um Curso existente ou o cria. Remove modalidade da busca/criação e inclui pesos."""
     
-    db_curso = db.query(models.Curso).filter(
+    # Build query filters handling None values
+    filters = [
         models.Curso.nome_curso == curso.nome_curso,
-        models.Curso.ID_instituicao == instituicao_id,
-        models.Curso.grau == curso.grau,
-        models.Curso.turno == curso.turno 
-    ).first()
+        models.Curso.ID_instituicao == instituicao_id
+    ]
+    
+    # Handle grau - compare directly since it can be None
+    if curso.grau is not None:
+        filters.append(models.Curso.grau == curso.grau)
+    else:
+        filters.append(models.Curso.grau.is_(None))
+    
+    # Handle turno - compare directly since it can be None
+    if curso.turno is not None:
+        filters.append(models.Curso.turno == curso.turno)
+    else:
+        filters.append(models.Curso.turno.is_(None))
+    
+    db_curso = db.query(models.Curso).filter(*filters).first()
 
     if db_curso:
         return db_curso
@@ -255,26 +279,42 @@ def update_candidato_complementary_data(
     """
     Insere ou atualiza os dados de Nota, Instituição e Curso de interesse para um candidato existente.
     """
-    db_candidato = get_candidato(db, candidato_id) 
-    if not db_candidato:
-        raise Exception("Candidato não encontrado.")
+    try:
+        db_candidato = get_candidato(db, candidato_id) 
+        if not db_candidato:
+            raise Exception("Candidato não encontrado.")
 
-    db_instituicao = get_or_create_instituicao(db, data.instituicao)
+        db_instituicao = get_or_create_instituicao(db, data.instituicao)
 
- 
-    db_curso = db.query(models.Curso).filter(
-        func.lower(models.Curso.nome_curso) == func.lower(data.curso.nome_curso),
-        models.Curso.ID_instituicao == db_instituicao.ID,
-        func.lower(models.Curso.grau) == func.lower(data.curso.grau),
-        func.lower(models.Curso.turno) == func.lower(data.curso.turno)
-    ).first()
+        # Build query filters handling None values properly
+        filters = [
+            func.lower(models.Curso.nome_curso) == func.lower(data.curso.nome_curso),
+            models.Curso.ID_instituicao == db_instituicao.ID
+        ]
+        
+        # Only add grau/turno filters if they are not None
+        if data.curso.grau is not None:
+            filters.append(func.lower(models.Curso.grau) == func.lower(data.curso.grau))
+        else:
+            filters.append(models.Curso.grau.is_(None))
+            
+        if data.curso.turno is not None:
+            filters.append(func.lower(models.Curso.turno) == func.lower(data.curso.turno))
+        else:
+            filters.append(models.Curso.turno.is_(None))
+        
+        db_curso = db.query(models.Curso).filter(*filters).first()
 
-    if not db_curso:
-
-        raise Exception(
-            f"O curso '{data.curso.nome_curso}' não foi encontrado. "
-            f"Verifique se o curso está cadastrado na Instituição ('{db_instituicao.sigla}') com o Grau ('{data.curso.grau}') e Turno ('{data.curso.turno}') corretos."
-        )
+        if not db_curso:
+            raise Exception(
+                f"O curso '{data.curso.nome_curso}' não foi encontrado. "
+                f"Verifique se o curso está cadastrado na Instituição ('{db_instituicao.sigla}') com o Grau ('{data.curso.grau}') e Turno ('{data.curso.turno}') corretos."
+            )
+    except Exception as e:
+        import traceback
+        print(f"Error in update_candidato_complementary_data: {e}")
+        print(traceback.format_exc())
+        raise
 
     db_nota = db.query(models.Nota).filter(models.Nota.ID_Candidato == candidato_id).first()
     
