@@ -247,6 +247,25 @@ def delete_curso_endpoint(curso_id: int, db: Session = DbDependency):
             detail=f"Erro ao deletar o curso: {e}"
         )
 
+@router.put("/cursos/{curso_id}", response_model=schemas.CursoCreate, status_code=status.HTTP_200_OK)
+def update_curso_endpoint(
+    curso_id: int, 
+    curso_data: schemas.CursoCreate, 
+    db: Session = DbDependency
+):
+    """
+    Atualiza todos os campos de um curso existente (pesos, notas de corte, grau, turno, etc.) pelo ID.
+    """
+    updated_curso = crud.update_curso(db, curso_id, curso_data)
+    
+    if updated_curso is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail=f"Curso com ID {curso_id} não encontrado para atualização."
+        )
+    
+    return updated_curso
+
 @router.post("/dados/lote/", status_code=status.HTTP_201_CREATED, summary="Insere dados de teste em lote")
 def create_candidatos_lote_endpoint(lote: schemas.LoteCandidatos, db: Session = DbDependency):
     try:

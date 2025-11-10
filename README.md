@@ -13,6 +13,35 @@ Publicar o site no GitHub Pages automaticamente ao enviar para a branch `main`. 
 - **Autenticação**: Sistema híbrido (Supabase ou API FastAPI)
 - **Deploy**: GitHub Pages (frontend) + Railway/Heroku (API)
 
+## ⚡ Início Rápido
+
+### Desenvolvimento Local Completo
+
+```powershell
+# 1. Clone o repositório
+git clone https://github.com/MuriloVinicius-dc/ProUni-Simulador.git
+cd ProUni-Simulador
+
+# 2. Instale as dependências do frontend
+npm ci
+
+# 3. Configure as variáveis de ambiente
+Copy-Item .env.example .env.local
+# Edite .env.local:
+# VITE_USE_REAL_API=true
+# VITE_API_URL=http://localhost:8000
+
+# 4. Inicie o backend (em um terminal)
+.\start-api.ps1
+
+# 5. Inicie o frontend (em outro terminal)
+npm run dev
+```
+
+Pronto! Acesse:
+- Frontend: `http://localhost:5173`
+- API Docs: `http://localhost:8000/docs`
+
 ## 🚀 Como funciona o deploy automático
 
 - Um workflow GitHub Actions (`.github/workflows/deploy.yml`) roda em pushes para `main`.
@@ -66,33 +95,31 @@ npm run preview
 .\start-api.ps1
 ```
 
-**Opção 2: Script automático (Linux/Mac)**
-
-```bash
-chmod +x start-api.sh
-./start-api.sh
-```
-
-**Opção 3: Manual**
+**Opção 2: Manual (se o script não funcionar)**
 
 ```powershell
-cd "Banco + API"
-python -m venv venv
-.\venv\Scripts\Activate.ps1  # Windows
-# source venv/bin/activate    # Linux/Mac
-pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
+cd Backend
+python -m uvicorn main:app --reload --port 8000
 ```
 
 A API estará em: `http://localhost:8000`  
 Documentação interativa: `http://localhost:8000/docs`
 
+> **Nota:** Se você encontrar erros de módulo, certifique-se de que está executando o comando a partir da raiz do projeto (`ProUni_Front/`) e não de dentro da pasta `Backend/`.
+
 ## 📖 Documentação
 
-- **[API_INTEGRATION.md](./API_INTEGRATION.md)** - Guia completo de integração com a API
+### Guias Principais
+- **[MAPA_CONEXOES.md](./MAPA_CONEXOES.md)** - 🗺️ Visão geral de todas as conexões Frontend ↔ Backend
+- **[ROTAS_API.md](./ROTAS_API.md)** - 📚 Documentação completa de todas as rotas da API
+- **[EXEMPLOS_INTEGRACAO.md](./EXEMPLOS_INTEGRACAO.md)** - 💡 Exemplos práticos de código para cada página
+- **[DIAGRAMA_ARQUITETURA.md](./DIAGRAMA_ARQUITETURA.md)** - 🏗️ Diagramas e fluxos de dados
+
+### Referências Técnicas
+- **[API_INTEGRATION.md](./API_INTEGRATION.md)** - Guia de integração com a API
 - **[AUTH_README.md](./AUTH_README.md)** - Sistema de autenticação
-- **[PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)** - Estrutura do projeto
-- **[DARK_MODE_FIX.md](./DARK_MODE_FIX.md)** - Correção do modo dark
+- **[PROJECT_STRUCTURE.md](./src/PROJECT_STRUCTURE.md)** - Estrutura do projeto
+- **[CHECKLIST_IMPLEMENTACAO.md](./CHECKLIST_IMPLEMENTACAO.md)** - ✅ Checklist de tarefas
 
 ## 🔧 Configuração
 
@@ -112,23 +139,49 @@ VITE_USE_REAL_API=false
 
 ```
 ProUni_Front/
-├── Banco + API/          # Backend FastAPI
+├── Backend/              # 🔧 Backend FastAPI (principal)
 │   ├── main.py
-│   ├── requirements.txt
 │   └── db/
-│       ├── models.py
-│       ├── schemas.py
-│       ├── crud.py
-│       └── routers/
+│       ├── models.py     # Modelos ORM
+│       ├── schemas.py    # Schemas Pydantic
+│       ├── crud.py       # Operações banco de dados
+│       ├── auth/         # Autenticação
+│       └── routers/      # Routers API
+│
 ├── src/
 │   ├── components/       # Componentes React
+│   │   ├── auth/        # Autenticação
+│   │   ├── simulacao/   # Fluxo de simulação
+│   │   └── ui/          # Componentes UI (shadcn)
+│   │
 │   ├── pages/           # Páginas da aplicação
-│   ├── contexts/        # Context API (Auth)
-│   ├── services/        # Serviços de API
-│   ├── lib/             # Utilitários
-│   └── entities/        # Modelos de dados
+│   │   ├── Login/
+│   │   ├── Cadastro/
+│   │   ├── Dashboard/
+│   │   └── Simulacao/
+│   │
+│   ├── services/        # 🆕 Serviços de API
+│   │   ├── authService.js
+│   │   ├── cursoService.js
+│   │   └── simulacaoService.js
+│   │
+│   ├── hooks/           # 🆕 Hooks customizados
+│   │   └── useSimulacao.js
+│   │
+│   ├── contexts/        # Context API
+│   │   └── AuthContext.jsx
+│   │
+│   ├── lib/             # Bibliotecas e config
+│   │   ├── api.js       # Cliente HTTP
+│   │   ├── supabase.js  # Config Supabase
+│   │   └── utils.jsx    # Utilitários
+│   │
+│   └── entities/        # Modelos de domínio
+│       └── Simulacao.jsx
+│
 ├── docs/                # Build para GitHub Pages
-└── .env.local          # Configurações locais
+├── .env.local           # Configurações locais
+└── start-api.ps1        # Script para iniciar API
 ```
 
 ## 🚀 Deploy
@@ -136,12 +189,52 @@ ProUni_Front/
 ### Frontend (GitHub Pages)
 Automático via GitHub Actions ao fazer push para `main`.
 
+**Configuração manual (se necessário):**
+1. Settings → Pages
+2. Source: Deploy from a branch
+3. Branch: `main` / Folder: `/docs`
+
 ### Backend (Produção)
-Recomendações:
-- **Railway**: Deploy fácil com PostgreSQL grátis
-- **Heroku**: Opção tradicional
-- **Render**: Alternativa moderna
-- **AWS EC2**: Controle total
+Recomendações de plataformas:
+- **Railway**: Deploy fácil com PostgreSQL grátis ([railway.app](https://railway.app))
+- **Render**: Alternativa moderna ([render.com](https://render.com))
+- **Heroku**: Opção tradicional ([heroku.com](https://heroku.com))
+- **AWS EC2**: Controle total (requer mais configuração)
+
+**Após deploy do backend:**
+1. Atualize `VITE_API_URL` no `.env` com a URL de produção
+2. Configure CORS no backend para aceitar o domínio do GitHub Pages
+3. Rebuild e redeploy do frontend
+
+## 🔌 API Endpoints
+
+Todas as rotas estão documentadas em [ROTAS_API.md](./ROTAS_API.md). Principais endpoints:
+
+### Autenticação
+- `POST /cadastro` - Criar nova conta
+- `POST /login` - Autenticar usuário
+
+### Cursos
+- `GET /cursos/` - Listar cursos disponíveis
+- `GET /cursos/{id}` - Detalhes de um curso
+- `POST /cursos/` - Cadastrar novo curso
+
+### Simulação
+- `POST /formulario/{candidato_id}` - Preencher dados da simulação
+- `GET /resultados/{candidato_id}` - Obter resultado da aprovação
+
+Documentação interativa: `http://localhost:8000/docs` (Swagger)
+
+## 🎓 Fluxo do Usuário
+
+1. **Cadastro** → Criar conta com nome, email e senha
+2. **Login** → Autenticar no sistema
+3. **Dashboard** → Visualizar perfil e histórico
+4. **Simulação** → 
+   - Preencher notas do ENEM
+   - Selecionar curso e instituição
+   - Ver resultado (aprovado/não aprovado)
+5. **Nova Simulação** → Testar outros cursos
 
 ## 🐛 Troubleshooting
 

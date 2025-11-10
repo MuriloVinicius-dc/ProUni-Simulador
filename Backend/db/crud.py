@@ -222,6 +222,27 @@ def update_candidato(db: Session, candidato_id: int, candidato_data: schemas.Can
         return db_candidato
     return None
 
+def update_curso(db: Session, curso_id: int, curso_data: schemas.CursoCreate) -> Optional[models.Curso]:
+    """
+    Atualiza os dados de um curso existente pelo ID.
+    Retorna o objeto do curso atualizado ou None se não for encontrado.
+    """
+    db_curso = db.query(models.Curso).filter(models.Curso.ID == curso_id).first()
+    
+    if db_curso:
+        
+        update_data = curso_data.model_dump(exclude_unset=True) 
+
+        for key, value in update_data.items():
+            
+            setattr(db_curso, key, value)
+            
+        db.commit()
+        db.refresh(db_curso)
+        return db_curso
+        
+    return None
+
 def delete_candidato(db: Session, candidato_id: int):
     db_candidato = get_candidato(db, candidato_id)
     if db_candidato:
