@@ -66,4 +66,28 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* Make native date-picker icon white (WebKit browsers only). */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    -webkit-filter: invert(1) brightness(2) !important;
+    filter: invert(1) brightness(2) !important;
+    opacity: 1 !important;
+  }
+  /* Position the native date-picker icon at the extreme right of the input. */
+  input[type="date"] {
+    position: relative;
+    /* extra padding to avoid overlap with the icon */
+    padding-right: 2.5rem;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    /* keep the previously applied color tweak */
+    -webkit-filter: invert(1) brightness(2) !important;
+    filter: invert(1) brightness(2) !important;
+    opacity: 1 !important;
+  }
 }

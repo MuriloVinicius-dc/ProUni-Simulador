@@ -3,15 +3,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, GraduationCap, DollarSign, MapPin } from "lucide-react";
+import { User, GraduationCap, MapPin } from "lucide-react";
 
 const ESTADOS_BRASIL = [
   "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG",
   "MS", "MT", "PA", "PB", "PE", "PI", "PR", "RJ", "RN", "RO", "RR",
   "RS", "SC", "SE", "SP", "TO"
 ];
+
+const REGION_TO_UFS = {
+  "Norte": ["AC", "AP", "AM", "PA", "RO", "RR", "TO"],
+  "Nordeste": ["AL", "BA", "CE", "MA", "PB", "PE", "PI", "RN", "SE"],
+  "Centro-Oeste": ["DF", "GO", "MT", "MS"],
+  "Sudeste": ["ES", "MG", "RJ", "SP"],
+  "Sul": ["PR", "RS", "SC"],
+};
 
 const INSTITUICOES = [
   { sigla: "UFPE", nome: "Universidade Federal de Pernambuco" },
@@ -44,8 +51,21 @@ const INSTITUICOES = [
   { sigla: "UFPI", nome: "Universidade Federal do Piauí" },
 ];
 
+// Mapeamento leve para filtrar instituições por UF (fallback para lista completa)
+const INSTITUICOES_BY_UF = {
+  SP: ["USP", "UNICAMP", "UNESP"],
+  RJ: ["UFRJ", "UERJ", "UFF", "UNIRIO"],
+  PE: ["UFPE", "UFRPE", "UPE", "IFPE"],
+  MG: ["UFMG", "UFU", "UFV"],
+  BA: ["UFBA"],
+  PR: ["UFPR"],
+  RS: ["UFRGS"],
+  AM: ["UFAM"],
+  PA: ["UFPA"],
+  DF: ["UnB"],
+};
+
 const TURNOS = ["Matutino", "Vespertino", "Noturno", "Integral"];
-const GRAUS = ["Bachalerado", "Licenciatura"];
 
 const MUNICIPIOS_BY_ESTADO = {
   "AC": ["ACRELANDIA", "ASSIS BRASIL", "BRASILEIA", "BUJARI", "CAPIXABA", "CRUZEIRO DO SUL", "EPITACIOLANDIA", "FEIJO", "JORDAO", "MANCIO LIMA", "MANOEL URBANO", "MARECHAL THAUMATURGO", "PLACIDO DE CASTRO", "PORTO ACRE", "PORTO WALTER", "RIO BRANCO", "RODRIGUES ALVES", "SENA MADUREIRA", "SENADOR GUIOMARD", "TARAUACA", "XAPURI"],
@@ -89,44 +109,56 @@ const CURSOS_POPULARES = [
 
 export default function FormularioSimulacao({ onSubmit }) {
   const [formData, setFormData] = useState({
-    nota_lc: "",
-    nota_mt: "",
-    nota_ch: "",
-    nota_ct: "",
-    nota_redacao: "",
-    modalidade_concorrencia: "",
+    // notas removidas — base do design não as inclui
+    // seguindo o notebook: usar nome completo da IES e campos do dataset
+    instituicao: "",
     nome_curso: "",
-    instituicao_sigla: "",
-    instituicao_nome: "",
-    grau: "",
+    
     turno: "",
     estado: "",
     municipio: "",
+    // Novos campos sócio-demográficos e localização
+    data_nascimento: "",
+    sexo: "",
+    cor_raca: "",
+    possui_deficiencia: "no",
+    regiao_origem: "",
+    // modalidade de ensino conforme notebook (e.g., 'Presencial' | 'EAD')
+    modalidade_ensino: "",
   });
 
   const [errors, setErrors] = useState({});
 
   const handleInputChange = (field, value) => {
-    // Se o estado mudar, limpa o municipio selecionado
-    if (field === "estado") {
-      setFormData(prev => ({ ...prev, [field]: value, municipio: "" }));
-      if (errors.municipio) {
-        setErrors(prev => ({ ...prev, municipio: null }));
+    // Se a região mudar, limpa UF e município (cascata Região -> UF -> Município)
+    if (field === "regiao_origem") {
+      const availableUfs = REGION_TO_UFS[value] || ESTADOS_BRASIL;
+      setFormData(prev => ({
+        ...prev,
+        regiao_origem: value,
+        // se a UF atual não pertence à nova região, limpar; sempre limpar município
+        estado: availableUfs.includes(prev.estado) ? prev.estado : "",
+        municipio: "",
+      }));
+      if (errors.estado || errors.municipio) {
+        setErrors(prev => ({ ...prev, estado: null, municipio: null }));
       }
       return;
     }
 
-    // Se a instituição mudar, atualiza sigla e nome
-    if (field === "instituicao_sigla") {
-      const instituicao = INSTITUICOES.find(inst => inst.sigla === value);
-      setFormData(prev => ({ 
-        ...prev, 
-        instituicao_sigla: value,
-        instituicao_nome: instituicao ? instituicao.nome : ""
-      }));
-      if (errors.instituicao_sigla) {
-        setErrors(prev => ({ ...prev, instituicao_sigla: null }));
+    // Se o estado mudar, limpa o municipio selecionado e reseta instituição (lista varia por UF)
+    if (field === "estado") {
+      setFormData(prev => ({ ...prev, [field]: value, municipio: "", instituicao: "" }));
+      if (errors.municipio || errors.instituicao) {
+        setErrors(prev => ({ ...prev, municipio: null, instituicao: null }));
       }
+      return;
+    }
+
+    // Se a instituição mudar, atualiza para o nome completo (seguindo o notebook)
+    if (field === "instituicao") {
+      setFormData(prev => ({ ...prev, instituicao: value }));
+      if (errors.instituicao) setErrors(prev => ({ ...prev, instituicao: null }));
       return;
     }
 
@@ -139,22 +171,12 @@ export default function FormularioSimulacao({ onSubmit }) {
   const validateForm = () => {
     const newErrors = {};
 
-    const validateNota = (field, value) => {
-      if (!value || value < 0 || value > 1000) {
-        newErrors[field] = "Nota deve estar entre 0 e 1000";
-      }
-    };
+    // notas removidas — não validar notas aqui (design atual)
 
-    validateNota("nota_lc", formData.nota_lc);
-    validateNota("nota_mt", formData.nota_mt);
-    validateNota("nota_ch", formData.nota_ch);
-    validateNota("nota_ct", formData.nota_ct);
-    validateNota("nota_redacao", formData.nota_redacao);
-
-    if (!formData.modalidade_concorrencia) newErrors.modalidade_concorrencia = "Informe a modalidade";
-    if (!formData.instituicao_sigla) newErrors.instituicao_sigla = "Informe a instituição";
+    if (!formData.modalidade_ensino) newErrors.modalidade_ensino = "Informe a modalidade";
+    if (!formData.instituicao) newErrors.instituicao = "Informe a instituição";
     if (!formData.nome_curso) newErrors.nome_curso = "Informe o nome do curso";
-    if (!formData.grau) newErrors.grau = "Informe o grau do curso";
+    
     if (!formData.turno) newErrors.turno = "Informe o turno";
     
     setErrors(newErrors);
@@ -165,28 +187,32 @@ export default function FormularioSimulacao({ onSubmit }) {
     e.preventDefault();
     if (validateForm()) {
       // Estruturar dados conforme esperado pelo backend
+      // Estrutura alinhada ao notebook: nomes de coluna usados como chaves
       const dadosFormatados = {
-        nota: {
-          nota_ct: parseFloat(formData.nota_ct),
-          nota_ch: parseFloat(formData.nota_ch),
-          nota_lc: parseFloat(formData.nota_lc),
-          nota_mt: parseFloat(formData.nota_mt),
-          nota_redacao: parseFloat(formData.nota_redacao),
-          modalidade_concorrencia: formData.modalidade_concorrencia,
-        },
         instituicao: {
-          nome: formData.instituicao_nome,
-          sigla: formData.instituicao_sigla,
-          localizacao_campus: formData.estado && formData.municipio 
-            ? `${formData.municipio} - ${formData.estado}` 
-            : formData.estado || null,
-          modalidade: null, // Add modalidade field as null for compatibility
+          nome_ies_bolsa: formData.instituicao || null,
+          uf: formData.estado || null,
+          municipio: formData.municipio || null,
         },
         curso: {
-          nome_curso: formData.nome_curso,
-          grau: formData.grau || null,
-          turno: formData.turno || null,
+          nome_curso_bolsa: formData.nome_curso || null,
+          nome_turno_curso_bolsa: formData.turno || null,
+          modalidade_ensino_bolsa: formData.modalidade_ensino || null,
         }
+      };
+
+      // Adiciona os campos sócio-demográficos e localização adicionais
+      dadosFormatados.pessoal = {
+        data_nascimento: formData.data_nascimento || null,
+        sexo: formData.sexo || null,
+        cor_raca: formData.cor_raca || null,
+        possui_deficiencia: formData.possui_deficiencia === 'yes',
+      };
+
+      dadosFormatados.localizacao = {
+        regiao_origem: formData.regiao_origem || null,
+        uf_origem: formData.estado || null,
+        municipio_origem: formData.municipio || null,
       };
       
       onSubmit(dadosFormatados);
@@ -205,117 +231,153 @@ export default function FormularioSimulacao({ onSubmit }) {
       </CardHeader>
 
       <CardContent className="space-y-8">
-        {/* Dados */}
+        {/* Perfil Sócio-Demográfico */}
         <Card className="border-0 shadow-lg bg-white dark:bg-slate-900/80 dark:shadow-black/50 dark:ring-1 dark:ring-slate-800/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg text-slate-900 dark:text-slate-100">
-              <GraduationCap className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              Notas
+              <User className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              Dados Pessoais
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid md:grid-cols-2 gap-6">
+          <CardContent className="grid md:grid-cols-3 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="nota_ct">Ciências da Natureza *</Label>
+              <Label htmlFor="data_nascimento">Data de Nascimento</Label>
               <Input
-                id="nota_ct"
-                type="number"
-                min="0"
-                max="1000"
-                step="0.1"
-                value={formData.nota_ct}
-                onChange={(e) => handleInputChange("nota_ct", e.target.value)}
-                className={errors.nota_ct ? "border-red-500" : ""}
-                placeholder="Ex: 650.5"
+                id="data_nascimento"
+                type="date"
+                className={`pr-10 relative ${errors.data_nascimento ? 'border-red-500' : ''}`}
+                value={formData.data_nascimento}
+                onChange={(e) => handleInputChange('data_nascimento', e.target.value)}
               />
-              {errors.nota_ct && <p className="text-sm text-red-500">{errors.nota_ct}</p>}
+              {errors.data_nascimento && <p className="text-sm text-red-500">{errors.data_nascimento}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="nota_ch">Ciências Humanas *</Label>
-              <Input
-                id="nota_ch"
-                type="number"
-                min="0"
-                max="1000"
-                step="0.1"
-                value={formData.nota_ch}
-                onChange={(e) => handleInputChange("nota_ch", e.target.value)}
-                className={errors.nota_ch ? "border-red-500" : ""}
-                placeholder="Ex: 650.5"
-              />
-              {errors.nota_ch && <p className="text-sm text-red-500">{errors.nota_ch}</p>}
+              <Label htmlFor="sexo">Sexo</Label>
+              <Select onValueChange={(value) => handleInputChange('sexo', value)} value={formData.sexo}>
+                <SelectTrigger className={errors.sexo ? 'border-red-500' : ''}>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Masculino">Masculino</SelectItem>
+                  <SelectItem value="Feminino">Feminino</SelectItem>
+                  <SelectItem value="Outro">Outro</SelectItem>
+                  <SelectItem value="Prefiro não dizer">Prefiro não dizer</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="nota_lc">Linguagens e Códigos *</Label>
-              <Input
-                id="nota_lc"
-                type="number"
-                min="0"
-                max="1000"
-                step="0.1"
-                value={formData.nota_lc}
-                onChange={(e) => handleInputChange("nota_lc", e.target.value)}
-                className={errors.nota_lc ? "border-red-500" : ""}
-                placeholder="Ex: 650.5"
-              />
-              {errors.nota_lc && <p className="text-sm text-red-500">{errors.nota_lc}</p>}
+              <Label htmlFor="cor_raca">Cor/Raça</Label>
+              <Select onValueChange={(value) => handleInputChange('cor_raca', value)} value={formData.cor_raca}>
+                <SelectTrigger className={errors.cor_raca ? 'border-red-500' : ''}>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Branco">Branco</SelectItem>
+                  <SelectItem value="Preto">Preto</SelectItem>
+                  <SelectItem value="Pardo">Pardo</SelectItem>
+                  <SelectItem value="Amarelo">Amarelo</SelectItem>
+                  <SelectItem value="Indígena">Indígena</SelectItem>
+                  <SelectItem value="Prefiro não dizer">Prefiro não dizer</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="nota_mt">Matemática *</Label>
-              <Input
-                id="nota_mt"
-                type="number"
-                min="0"
-                max="1000"
-                step="0.1"
-                value={formData.nota_mt}
-                onChange={(e) => handleInputChange("nota_mt", e.target.value)}
-                className={errors.nota_mt ? "border-red-500" : ""}
-                placeholder="Ex: 650.5"
-              />
-              {errors.nota_mt && <p className="text-sm text-red-500">{errors.nota_mt}</p>}
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="nota_redacao">Redação *</Label>
-              <Input
-                id="nota_redacao"
-                type="number"
-                min="0"
-                max="1000"
-                step="0.1"
-                value={formData.nota_redacao}
-                onChange={(e) => handleInputChange("nota_redacao", e.target.value)}
-                className={errors.nota_redacao ? "border-red-500" : ""}
-                placeholder="Ex: 800"
-              />
-              {errors.nota_redacao && <p className="text-sm text-red-500">{errors.nota_redacao}</p>}
+            <div className="md:col-span-3">
+              <Label>Possui Deficiência?</Label>
+              <div className="flex items-center gap-6 mt-2">
+                <label className="inline-flex items-center">
+                  <input type="radio" name="def" value="yes" checked={formData.possui_deficiencia === 'yes'} onChange={() => handleInputChange('possui_deficiencia', 'yes')} className="mr-2" />
+                  Sim
+                </label>
+                <label className="inline-flex items-center">
+                  <input type="radio" name="def" value="no" checked={formData.possui_deficiencia === 'no'} onChange={() => handleInputChange('possui_deficiencia', 'no')} className="mr-2" />
+                  Não
+                </label>
+              </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Localização */}
+        <Card className="border-0 shadow-lg bg-white dark:bg-slate-900/80 dark:shadow-black/50 dark:ring-1 dark:ring-slate-800/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg text-slate-900 dark:text-slate-100">
+              <MapPin className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              Localização
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="regiao_origem">Região</Label>
+              <Select onValueChange={(value) => handleInputChange('regiao_origem', value)} value={formData.regiao_origem}>
+                <SelectTrigger className={errors.regiao_origem ? 'border-red-500' : ''}>
+                  <SelectValue placeholder="Selecione a Região" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Norte">Norte</SelectItem>
+                  <SelectItem value="Nordeste">Nordeste</SelectItem>
+                  <SelectItem value="Centro-Oeste">Centro-Oeste</SelectItem>
+                  <SelectItem value="Sudeste">Sudeste</SelectItem>
+                  <SelectItem value="Sul">Sul</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="estado">Estado</Label>
+              <Select onValueChange={(value) => handleInputChange('estado', value)} value={formData.estado} disabled={!formData.regiao_origem}>
+                <SelectTrigger className={errors.estado ? 'border-red-500' : ''}>
+                  <SelectValue placeholder={formData.regiao_origem ? "Selecione o Estado" : "Selecione a Região primeiro"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {(REGION_TO_UFS[formData.regiao_origem] || ESTADOS_BRASIL).map(uf => (
+                    <SelectItem key={uf} value={uf}>{uf}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.estado && <p className="text-sm text-red-500">{errors.estado}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="municipio">Município</Label>
+              <Select onValueChange={(value) => handleInputChange('municipio', value)} value={formData.municipio} disabled={!formData.estado}>
+                <SelectTrigger className={errors.municipio ? 'border-red-500' : ''}>
+                  <SelectValue placeholder={formData.estado ? "Selecione um município" : "Selecione o UF primeiro"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {(MUNICIPIOS_BY_ESTADO[formData.estado] || []).map(mun => (
+                    <SelectItem key={mun} value={mun}>{mun}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.municipio && <p className="text-sm text-red-500">{errors.municipio}</p>}
+            </div>
+          </CardContent>
+        </Card>
+        {/* Notas removidas conforme base do anexo */}
 
         {/* Informações do Curso Pretendido */}
         <Card className="border-0 shadow-lg bg-white dark:bg-slate-900/80 dark:shadow-black/50 dark:ring-1 dark:ring-slate-800/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg text-slate-900 dark:text-slate-100">
               <GraduationCap className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              Informações do Curso Pretendido
+              Informações do Curso
             </CardTitle>
           </CardHeader>
           <CardContent className="grid md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="instituicao">Instituição *</Label>
-              <Select onValueChange={(value) => handleInputChange("instituicao_sigla", value)} value={formData.instituicao_sigla}>
-                <SelectTrigger className={errors.instituicao_sigla ? "border-red-500" : ""}>
-                  <SelectValue placeholder="Selecione a instituição" />
+              <Select onValueChange={(value) => handleInputChange("instituicao", value)} value={formData.instituicao}>
+                <SelectTrigger className={errors.instituicao ? "border-red-500" : ""}>
+                  <SelectValue placeholder={formData.estado ? "Selecione a instituição" : "Escolha o UF para filtrar"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {INSTITUICOES.map(inst => (
-                    <SelectItem key={inst.sigla} value={inst.sigla}>
-                      {inst.sigla}
-                    </SelectItem>
+                  {(INSTITUICOES_BY_UF[formData.estado]
+                    ? (INSTITUICOES_BY_UF[formData.estado].map(sigla => INSTITUICOES.find(i => i.sigla === sigla)).filter(Boolean))
+                    : INSTITUICOES
+                  ).map(inst => (
+                    <SelectItem key={inst.nome} value={inst.nome}>{inst.nome}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.instituicao_sigla && <p className="text-sm text-red-500">{errors.instituicao_sigla}</p>}
+              {errors.instituicao && <p className="text-sm text-red-500">{errors.instituicao}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="nome_curso">Nome do Curso *</Label>
@@ -332,20 +394,6 @@ export default function FormularioSimulacao({ onSubmit }) {
               {errors.nome_curso && <p className="text-sm text-red-500">{errors.nome_curso}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="grau">Grau *</Label>
-              <Select onValueChange={(value) => handleInputChange("grau", value)} value={formData.grau}>
-                <SelectTrigger className={errors.grau ? "border-red-500" : ""}>
-                  <SelectValue placeholder="Selecione o grau" />
-                </SelectTrigger>
-                <SelectContent>
-                  {GRAUS.map(grau => (
-                    <SelectItem key={grau} value={grau}>{grau}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.grau && <p className="text-sm text-red-500">{errors.grau}</p>}
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="turno">Turno *</Label>
               <Select onValueChange={(value) => handleInputChange("turno", value)} value={formData.turno}>
                 <SelectTrigger className={errors.turno ? "border-red-500" : ""}>
@@ -359,18 +407,19 @@ export default function FormularioSimulacao({ onSubmit }) {
               </Select>
               {errors.turno && <p className="text-sm text-red-500">{errors.turno}</p>}
             </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="modalidade">Modalidade de Concorrência *</Label>
-              <Select onValueChange={(value) => handleInputChange("modalidade_concorrencia", value)} value={formData.modalidade_concorrencia}>
-                <SelectTrigger className={errors.modalidade_concorrencia ? "border-red-500" : ""}>
+            <div className="space-y-2">
+              <Label htmlFor="modalidade">Modalidade de Ensino *</Label>
+              <Select onValueChange={(value) => handleInputChange("modalidade_ensino", value)} value={formData.modalidade_ensino}>
+                <SelectTrigger className={errors.modalidade_ensino ? "border-red-500" : ""}>
                   <SelectValue placeholder="Selecione a modalidade" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Cota">Cota</SelectItem>
-                  <SelectItem value="Ampla Concorrência">Ampla Concorrência</SelectItem>
+                  <SelectItem value="Presencial">Presencial</SelectItem>
+                  <SelectItem value="EAD">EAD</SelectItem>
+                  <SelectItem value="Híbrido">Híbrido</SelectItem>
                 </SelectContent>
               </Select>
-              {errors.modalidade_concorrencia && <p className="text-sm text-red-500">{errors.modalidade_concorrencia}</p>}
+              {errors.modalidade_ensino && <p className="text-sm text-red-500">{errors.modalidade_ensino}</p>}
             </div>
           </CardContent>
         </Card>
