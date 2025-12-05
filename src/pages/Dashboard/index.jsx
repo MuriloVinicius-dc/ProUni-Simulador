@@ -3,7 +3,17 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowRight, CheckCircle, Users, TrendingUp, BookOpen } from "lucide-react";
+import { ArrowRight, CheckCircle, Users, TrendingUp, BookOpen, BarChart3, PieChart as PieIcon, Activity, Info } from "lucide-react";
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, 
+  PieChart, Pie, Cell 
+} from 'recharts';
+import { 
+  TOP_UNIVERSITIES, 
+  MODALITY_DISTRIBUTION, 
+  RACE_DISTRIBUTION,
+  MODEL_ACCURACY
+} from "@/constants/dashboardData";
 
 export default function Dashboard() {
   return (
@@ -93,6 +103,172 @@ export default function Dashboard() {
                 Ampla variedade de cursos superiores em diversas áreas do conhecimento.
               </p>
             </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Data Visualizations Section */}
+      <section className="py-16 px-6 bg-slate-50/50 dark:bg-slate-950/30">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+              Estatísticas do ProUni
+            </h2>
+            <p className="text-lg text-slate-600 dark:text-slate-400">
+              Análise baseada nos dados oficiais do ProUni 2017
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Top Universities */}
+            <Card className="p-6 border-0 shadow-lg bg-white dark:bg-slate-900 dark:shadow-black/50 dark:ring-1 dark:ring-slate-800/50">
+              <div className="flex items-center gap-2 mb-4">
+                <BarChart3 className="text-blue-600 dark:text-blue-400 w-5 h-5" />
+                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                  Top Universidades (Volume de Bolsas)
+                </h3>
+              </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={TOP_UNIVERSITIES} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="currentColor" className="text-slate-200 dark:text-slate-700" />
+                    <XAxis type="number" hide />
+                    <YAxis dataKey="name" type="category" width={80} tick={{fontSize: 12, fill: 'currentColor'}} className="text-slate-600 dark:text-slate-400" />
+                    <RechartsTooltip 
+                      contentStyle={{
+                        backgroundColor: 'rgb(15 23 42)',
+                        border: '1px solid rgb(51 65 85)',
+                        borderRadius: '8px',
+                        color: 'rgb(226 232 240)'
+                      }}
+                    />
+                    <Bar dataKey="value" fill="#005c9e" radius={[0, 4, 4, 0]} barSize={20}>
+                      {TOP_UNIVERSITIES.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+
+            {/* Modality Distribution */}
+            <Card className="p-6 border-0 shadow-lg bg-white dark:bg-slate-900 dark:shadow-black/50 dark:ring-1 dark:ring-slate-800/50">
+              <div className="flex items-center gap-2 mb-4">
+                <PieIcon className="text-green-600 dark:text-green-400 w-5 h-5" />
+                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                  Distribuição: EAD vs Presencial
+                </h3>
+              </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={MODALITY_DISTRIBUTION}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                      label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    >
+                      {MODALITY_DISTRIBUTION.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip 
+                      contentStyle={{
+                        backgroundColor: 'rgb(15 23 42)',
+                        border: '1px solid rgb(51 65 85)',
+                        borderRadius: '8px',
+                        color: 'rgb(226 232 240)'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+
+            {/* Race Distribution */}
+            <Card className="p-6 border-0 shadow-lg bg-white dark:bg-slate-900 dark:shadow-black/50 dark:ring-1 dark:ring-slate-800/50">
+              <div className="flex items-center gap-2 mb-4">
+                <Activity className="text-orange-500 dark:text-orange-400 w-5 h-5" />
+                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                  Distribuição por Raça
+                </h3>
+              </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={RACE_DISTRIBUTION}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      dataKey="value"
+                    >
+                      {RACE_DISTRIBUTION.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Legend 
+                      layout="vertical" 
+                      verticalAlign="middle" 
+                      align="right" 
+                      wrapperStyle={{fontSize: '12px'}}
+                      formatter={(value) => <span className="text-slate-700 dark:text-slate-300">{value}</span>}
+                    />
+                    <RechartsTooltip 
+                      contentStyle={{
+                        backgroundColor: 'rgb(15 23 42)',
+                        border: '1px solid rgb(51 65 85)',
+                        borderRadius: '8px',
+                        color: 'rgb(226 232 240)'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+
+            {/* Model Performance */}
+            <Card className="p-6 border-0 shadow-lg bg-white dark:bg-slate-900 dark:shadow-black/50 dark:ring-1 dark:ring-slate-800/50">
+              <div className="flex items-center gap-2 mb-4">
+                <Info className="text-purple-600 dark:text-purple-400 w-5 h-5" />
+                <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                  Performance dos Modelos (Acurácia)
+                </h3>
+              </div>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={MODEL_ACCURACY}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-slate-200 dark:text-slate-700" />
+                    <XAxis dataKey="name" tick={{fontSize: 10, fill: 'currentColor'}} className="text-slate-600 dark:text-slate-400" />
+                    <YAxis domain={[0, 100]} tick={{fill: 'currentColor'}} className="text-slate-600 dark:text-slate-400" />
+                    <RechartsTooltip 
+                      contentStyle={{
+                        backgroundColor: 'rgb(15 23 42)',
+                        border: '1px solid rgb(51 65 85)',
+                        borderRadius: '8px',
+                        color: 'rgb(226 232 240)'
+                      }}
+                    />
+                    <Bar dataKey="value" fill="#8884d8" radius={[4, 4, 0, 0]}>
+                      <Cell fill="#9CA3AF" />
+                      <Cell fill="#9CA3AF" />
+                      <Cell fill="#9CA3AF" />
+                      <Cell fill="#7C3AED" /> {/* Highlight NN */}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <p className="text-xs mt-2 text-center" style={{ color: 'rgb(124, 58, 237)' }}>
+                A Rede Neural (MLP) obteve o melhor resultado com 81% de acurácia.
+              </p>
+            </Card>
+
           </div>
         </div>
       </section>
