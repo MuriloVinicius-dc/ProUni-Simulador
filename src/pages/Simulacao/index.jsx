@@ -43,18 +43,18 @@ export default function SimulacaoPage() {
   const processarSimulacaoComAPI = async (dados) => {
     setTimeout(async () => {
       try {
-        // 1. Envia os dados ao backend
+        // 1. Envia os dados complementares do formulário ao backend
         await simulacaoService.preencherFormulario(user.candidato_id, {
           nota: dados.nota,
           instituicao: dados.instituicao,
           curso: dados.curso
         });
 
-        // 2. Aguarda um pouco para simular processamento
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // 2. Aguarda um pouco para garantir que os dados foram salvos
+        await new Promise(resolve => setTimeout(resolve, 800));
 
-        // 3. Busca o resultado calculado pelo backend
-        const resultadoAPI = await simulacaoService.getResultado(user.candidato_id);
+        // 3. Aciona a simulação de classificação de bolsa via IA
+        const resultadoClassificacao = await simulacaoService.simularClassificacao(user.candidato_id);
 
         // 4. Monta o resultado no formato esperado pelo frontend
         const novoResultado = {
@@ -73,14 +73,13 @@ export default function SimulacaoPage() {
           nota_ch: dados.nota.nota_ch,
           nota_ct: dados.nota.nota_ct,
           nota_redacao: dados.nota.nota_redacao,
-          // Resultados do backend
-          mediaEnem: resultadoAPI.nota_candidato,
-          selecionado: resultadoAPI.aprovado,
-          nota_minima: resultadoAPI.nota_minima_corte,
-          diferenca: resultadoAPI.diferenca,
-          mensagem: resultadoAPI.mensagem,
-          // Mock de dados não retornados pela API
-          posicao: resultadoAPI.aprovado ? Math.floor(Math.random() * 10) + 1 : 15,
+          // Resultados do backend (classificação de bolsa via IA)
+          classificacao_bolsa: resultadoClassificacao.classificacao_bolsa,
+          mensagem: resultadoClassificacao.mensagem,
+          // Mock de dados adicionais para o layout
+          mediaEnem: (dados.nota.nota_lc + dados.nota.nota_mt + dados.nota.nota_ch + dados.nota.nota_ct + dados.nota.nota_redacao) / 5,
+          selecionado: resultadoClassificacao.classificacao_bolsa !== 'Não Elegível',
+          posicao: Math.floor(Math.random() * 10) + 1,
           vagas: 10,
           ingresso: "1º Semestre",
           link_instituicao: "#",
@@ -89,8 +88,8 @@ export default function SimulacaoPage() {
         // 5. Persiste localmente (opcional, para histórico)
         await Simulacao.create({
           ...novoResultado,
-          resultado_elegivel: resultadoAPI.aprovado,
-          pontuacao_calculada: resultadoAPI.nota_candidato,
+          resultado_elegivel: novoResultado.selecionado,
+          pontuacao_calculada: novoResultado.mediaEnem,
         });
 
         setResultado(novoResultado);

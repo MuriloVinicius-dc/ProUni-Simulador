@@ -16,6 +16,17 @@ export const simulacaoService = {
   },
 
   /**
+   * Aciona a simulação de classificação de bolsa via IA
+   * Coleta todos os dados do candidato e retorna a classificação (Integral/Parcial)
+   * @param {number} candidatoId 
+   * @returns {Promise<{classificacao_bolsa: string, mensagem: string, curso: string}>}
+   */
+  async simularClassificacao(candidatoId) {
+    const response = await api.get(`/simular/${candidatoId}`)
+    return response
+  },
+
+  /**
    * Calcula e retorna o resultado da simulação para um candidato
    * @param {number} candidatoId 
    * @returns {Promise<{aprovado: boolean, mensagem: string, nota_candidato: float, nota_minima_corte: float, curso: string, diferenca: float}>}

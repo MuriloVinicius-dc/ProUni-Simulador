@@ -18,15 +18,7 @@ class CursoCreate(BaseModel):
     grau: Optional[str] = Field(None, max_length=20)
     turno: Optional[str] = Field(None, max_length=20)
     
-    peso_ct: float = Field(1.0, ge=1.0)
-    peso_ch: float = Field(1.0, ge=1.0)
-    peso_lc: float = Field(1.0, ge=1.0)
-    peso_mt: float = Field(1.0, ge=1.0)
-    peso_redacao: float = Field(1.0, ge=1.0)
-
-    nota_maxima:float = Field(..., ge=0,le=1000)
-    nota_minima:float = Field(..., ge=0,le=1000)
-
+    
     class Config:
         from_attributes = True
 
@@ -58,33 +50,29 @@ class CursoResponse(BaseModel):
     class Config:
         from_attributes = True
 
-class NotaCreate(BaseModel):
-    """Dados obrigatórios de todas as notas do ENEM."""
-    nota_ct: float = Field(..., ge=0, le=1000)
-    nota_ch: float = Field(..., ge=0, le=1000)
-    nota_lc: float = Field(..., ge=0, le=1000)
-    nota_mt: float = Field(..., ge=0, le=1000)
-    nota_redacao: float = Field(..., ge=0, le=1000)
     
-    modalidade_concorrencia: str = Field(..., max_length=50) 
-    
-    class Config:
-        from_attributes = True
-
 class CandidatoBase(BaseModel):
-    """Campos base do Candidato."""
+    """Campos base do Candidato, agora aceitando input textual para codificação."""
     nome: str = Field(..., max_length=100)
     email: EmailStr 
     idade: Optional[int] = Field(None, ge=15, le=100)
-    sexo: Optional[str] = Field(None, max_length=9)
+    
+    sexo: Optional[str] = Field(None, max_length=9) # Ex: "Masculino", "Feminino"
+    
+    status_deficiencia_text: Optional[str] = Field("Não", description="Status de Deficiência: 'Sim' ou 'Não'")
+    
+    raca_beneficiario_bolsa: Optional[str] = Field(None, max_length=50) 
+    regiao_beneficiario_bolsa: Optional[str] = Field(None, max_length=50)
+
 
 class CandidatoCreate(CandidatoBase):
     """Schema para o POST/criação, inclui a senha."""
     senha: str = Field(..., min_length=6) 
 
 class CandidatoCompleto(CandidatoCreate):
-    """Estrutura de dados completa para inserção em lote."""
-    nota: NotaCreate
+    """Estrutura de dados completa para inserção em lote. NÃO INCLUI MAIS NOTA."""
+    modalidade_concorrencia: str = Field(..., description="Modalidade (Ampla Concorrência, Cotas, etc.) - FEATURE DA IA")
+    
     instituicao: InstituicaoCreate
     curso: CursoCreate
     
@@ -109,8 +97,12 @@ class LoginRequest(BaseModel):
     senha: str
     
 class DadosComplementaresRequest(BaseModel):
-    """Schema usado no POST /formulario/{candidato_id}"""
-    nota: NotaCreate
+    """
+    Schema usado no POST /formulario/{candidato_id}.
+    Contém as features de curso/inscrição necessárias para a IA.
+    """
+    modalidade_concorrencia: str = Field(..., description="Modalidade (Ampla Concorrência, Cotas, etc.) - FEATURE DA IA")
+    
     instituicao: InstituicaoCreate
     curso: CursoDadosInteresse 
     
@@ -126,19 +118,18 @@ class CursoIndividualCreateRequest(BaseModel):
         from_attributes = True
 
 class ResultadoSimulacao(BaseModel): 
-    aprovado: bool
+    classificacao_bolsa: str = Field(..., description="Resultado da classificação da IA: 'Bolsa Parcial' ou 'Bolsa Integral'.")
     mensagem: str
-    nota_candidato: float
-    nota_minima_corte: float
     curso: str
-    diferenca: float
+    
+    class Config:
+        from_attributes = True
 
 class AprovadoResponse(BaseModel):
     ID: int
     nome: str
     email: str
-    nota_final: float
-    nota_de_corte: float
+    classificacao_bolsa: str = Field(..., description="Resultado da Classificação de Bolsa")
     
     class Config:
         from_attributes = True

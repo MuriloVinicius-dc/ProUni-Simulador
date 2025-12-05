@@ -1,4 +1,5 @@
 .venv
+venv/
 __pycache__
 
 # Dependencies
@@ -11,6 +12,7 @@ node_modules/
 
 # Build
 dist/
+docs/assets/
 
 # Logs
 logs
@@ -34,3 +36,8 @@ Thumbs.db
 # Temporary
 tmp/
 temp/
+
+# Backend models & databases
+*.pkl
+*.db
+Backend/venv/

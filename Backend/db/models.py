@@ -20,23 +20,16 @@ class Candidato(Base):
     email = Column(Text, unique=True, nullable=False, index=True) 
     senha = Column(Text, nullable=False) 
     idade = Column(Integer)
-    sexo = Column(Text)
+    sexo = Column(Text) 
 
-    nota = relationship("Nota", back_populates="candidato", uselist=False)
-    inscricoes = relationship("Inscricao", back_populates="candidato")
+    status_deficiencia_text = Column(Text, default="Não")
+    raca_beneficiario_bolsa = Column(Text) 
+    regiao_beneficiario_bolsa = Column(Text)
+    sexo_binario = Column(Integer, default=0) 
+    deficiencia_binaria = Column(Integer, default=0) 
 
-class Nota(Base):
-    __tablename__ = "nota"
-    ID_Nota = Column(Integer, primary_key=True, index=True) 
-    ID_Candidato = Column(Integer, ForeignKey("candidato.ID"), unique=True, nullable=False) 
-    nota_ct = Column(REAL, nullable=False)
-    nota_ch = Column(REAL, nullable=False)
-    nota_lc = Column(REAL, nullable=False)  
-    nota_mt = Column(REAL, nullable=False) 
-    nota_redacao = Column(REAL, nullable=False)
+    inscricoes = relationship("Inscricao", back_populates="candidato") 
 
-    candidato = relationship("Candidato", back_populates="nota", uselist=False)
-    inscricoes = relationship("Inscricao", back_populates="nota")
 
 class Curso(Base):
     __tablename__ = "curso"
@@ -46,15 +39,6 @@ class Curso(Base):
     grau = Column(Text)
     turno = Column(Text) 
     
-    peso_ct = Column(REAL, nullable=False, default=1.0)
-    peso_ch = Column(REAL, nullable=False, default=1.0)
-    peso_lc = Column(REAL, nullable=False, default=1.0)
-    peso_mt = Column(REAL, nullable=False, default=1.0)
-    peso_redacao = Column(REAL, nullable=False, default=1.0)
-
-    nota_maxima = Column(REAL, nullable=False)
-    nota_minima = Column(REAL, nullable=False)
-    
     instituicao = relationship("Instituicao", back_populates="cursos")
     inscricoes = relationship("Inscricao", back_populates="curso")
 
@@ -62,11 +46,9 @@ class Inscricao(Base):
     __tablename__ = "inscricao"
     ID_inscricao = Column(Integer, primary_key=True, index=True)
     ano_sisu = Column(Integer, nullable=False)
-    modalidade = Column(Text, nullable=False)
+    modalidade = Column(Text, nullable=False) 
     ID_Candidato = Column(Integer, ForeignKey("candidato.ID"), nullable=False)
     ID_curso = Column(Integer, ForeignKey("curso.ID"), nullable=False)
-    ID_nota = Column(Integer, ForeignKey("nota.ID_Nota"), nullable=False) 
-
+    
     candidato = relationship("Candidato", back_populates="inscricoes")
     curso = relationship("Curso", back_populates="inscricoes")
-    nota = relationship("Nota", back_populates="inscricoes")
