@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Award, GraduationCap, MapPin, User, Users, BookOpen, CalendarDays } from "lucide-react";
+import { Award, GraduationCap, MapPin, User, Users, BookOpen, CalendarDays, AlertCircle } from "lucide-react";
 
 export default function ResultadoSimulacao({ resultado, onNovaSimulacao }) {
   const {
@@ -32,9 +32,9 @@ export default function ResultadoSimulacao({ resultado, onNovaSimulacao }) {
           <Award className="w-10 h-10 text-white" />
         </div>
         <CardTitle className={`text-3xl font-bold mb-4 ${
-          isBolsaIntegral ? "text-green-600 dark:text-green-400" : "text-blue-600 dark:text-blue-400"
+          isBolsaIntegral  ? "text-green-600 dark:text-green-400" : "text-blue-600 dark:text-blue-400"
         }`}>
-          {classificacao}
+          {classificacao} {isBolsaIntegral ? "100%" : "50%"}
         </CardTitle>
         <p className="text-slate-600 dark:text-slate-300 text-lg">
           {mensagem}
@@ -80,7 +80,7 @@ export default function ResultadoSimulacao({ resultado, onNovaSimulacao }) {
             Seu Perfil
           </h3>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
             <div>
               <p className="text-sm text-slate-500 dark:text-slate-400">Idade</p>
               <p className="font-semibold text-slate-700 dark:text-slate-200">{idade} anos</p>
@@ -104,30 +104,15 @@ export default function ResultadoSimulacao({ resultado, onNovaSimulacao }) {
           </div>
         </div>
 
-        {/* Resultado Visual */}
-        <div className={`p-8 rounded-lg text-center ${
-          isBolsaIntegral 
-            ? "bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-800" 
-            : "bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-2 border-blue-200 dark:border-blue-800"
-        }`}>
-          <div className={`inline-flex items-center gap-2 px-6 py-3 rounded-full ${
-            isBolsaIntegral
-              ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300"
-              : "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300"
-          }`}>
-            <Award className="w-6 h-6" />
-            <span className="font-bold text-xl">{classificacao}</span>
+        {/* Informação sobre Acurácia do Modelo */}
+        <div className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 p-4 rounded flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+          <div className="text-left">
+            <p className="font-semibold text-amber-900 dark:text-amber-200">Informação importante</p>
+            <p className="text-sm text-amber-800 dark:text-amber-300 mt-1">
+              Nosso modelo tem uma taxa de acurácia de <strong>73%</strong>, portanto este resultado é uma previsão e não deve ser considerado como uma garantia absoluta.
+            </p>
           </div>
-          
-          <p className={`mt-4 text-sm font-medium ${
-            isBolsaIntegral 
-              ? "text-green-700 dark:text-green-300" 
-              : "text-blue-700 dark:text-blue-300"
-          }`}>
-            {isBolsaIntegral 
-              ? "Cobertura de 100% da mensalidade" 
-              : "Cobertura de 50% da mensalidade"}
-          </p>
         </div>
 
         {/* Botões de Ação */}
