@@ -4,6 +4,7 @@ from typing import List, Optional, Any
 from sqlalchemy import func, case, or_
 from . import ml_model 
 from pydantic import BaseModel 
+from .auth import pass_utils
 
 
 def _get_ai_prediction(features: dict) -> str:
@@ -101,10 +102,11 @@ def authenticate_candidato(db:Session, email:str, senha:str) -> Optional[models.
     if not db_candidato:
         return None
     
-    if db_candidato.senha == senha:
-        return db_candidato
+    # Verifica a senha usando o utilitário de hash
+    if not pass_utils.verify_password(senha, db_candidato.senha):
+        return None
     
-    return None
+    return db_candidato
 
 def get_or_create_instituicao(db: Session, instituicao_data: schemas.InstituicaoCreate) -> models.Instituicao:
     """Busca uma Instituição pela sigla ou a cria se não existir."""
@@ -156,6 +158,10 @@ def create_candidato(db: Session, candidato: schemas.CandidatoCreate) -> models.
 
     
     candidato_dict = candidato.model_dump() 
+
+    # Gera o hash da senha antes de salvar
+    hashed_password = pass_utils.get_password_hash(candidato.senha)
+    candidato_dict['senha'] = hashed_password
     
     candidato_dict['sexo_binario'] = sexo_binario_value
     candidato_dict['deficiencia_binaria'] = deficiencia_binaria_value

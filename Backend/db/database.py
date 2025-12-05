@@ -5,7 +5,7 @@ import os
 
 # Create database directory if it doesn't exist
 db_dir = os.path.dirname(os.path.abspath(__file__))
-db_path = os.path.join(db_dir, "database.db")
+db_path = os.path.join(db_dir, "database_verdadeiro.db")
 SQLALCHEMY_DATABASE_URL = f"sqlite:///{db_path}"
 
 engine = create_engine(
