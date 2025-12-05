@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, Text, ForeignKey, REAL
+from sqlalchemy import Column, Integer, Text, ForeignKey, REAL, Boolean, DateTime
 from sqlalchemy.orm import relationship
+from datetime import datetime
 
 from .database import Base
 
@@ -52,3 +53,28 @@ class Inscricao(Base):
     
     candidato = relationship("Candidato", back_populates="inscricoes")
     curso = relationship("Curso", back_populates="inscricoes")
+
+
+class Simulacao(Base):
+    """Tabela para armazenar histórico de simulações realizadas"""
+    __tablename__ = "simulacao"
+    
+    ID = Column(Integer, primary_key=True, index=True)
+    data_simulacao = Column(DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Dados do candidato (10 features)
+    idade = Column(Integer, nullable=False)
+    sexo = Column(Text, nullable=False)
+    raca_beneficiario = Column(Text, nullable=False)
+    pcd = Column(Boolean, nullable=False)
+    regiao_beneficiario = Column(Text, nullable=False)
+    
+    # Dados do curso
+    modalidade_ensino = Column(Text, nullable=False)
+    nome_turno = Column(Text, nullable=False)
+    modalidade_concorrencia = Column(Text, nullable=False)
+    nome_curso = Column(Text, nullable=False)
+    nome_instituicao = Column(Text, nullable=False)
+    
+    # Resultado da IA
+    classificacao = Column(Text, nullable=False)  # "Bolsa Integral" ou "Bolsa Parcial"

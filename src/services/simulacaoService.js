@@ -5,6 +5,16 @@ import { api } from '@/lib/api'
 
 export const simulacaoService = {
   /**
+   * Analisa os dados do candidato diretamente (sem autenticação/cadastro)
+   * @param {Object} dados - { idade, modalidade_concorrencia, pcd, sexo, raca_beneficiario, regiao_beneficiario, modalidade_ensino, nome_turno, nome_curso, nome_instituicao }
+   * @returns {Promise<{classificacao: string, mensagem: string, dados_entrada: Object}>}
+   */
+  async analisarCandidato(dados) {
+    const response = await api.post('/simular-direto', dados)
+    return response
+  },
+
+  /**
    * Preenche dados complementares do candidato (notas, curso, instituição)
    * @param {number} candidatoId 
    * @param {Object} dadosComplementares - { nota, instituicao, curso }

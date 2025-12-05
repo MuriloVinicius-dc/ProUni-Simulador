@@ -74,35 +74,6 @@ def update_candidato_complementary_data(
         raise Exception(f"Erro ao salvar dados complementares. Detalhe: {e}")
 
 @router.get(
-    "/simular/{candidato_id}",
-    response_model=schemas.ResultadoSimulacao,
-    summary="Simulação de Classificação de Bolsa (IA)",
-    status_code=status.HTTP_200_OK
-)
-def simular_classificacao_endpoint(
-    candidato_id: int,
-    db: Session = DbDependency
-):
-    """
-    Coleta todos os dados do candidato (8 features) e aciona o modelo de IA
-    para obter a classificação de bolsa de estudos (Integral ou Parcial).
-    """
-    try:
-        resultado = crud.classificar_bolsa_candidato(db, candidato_id)
-        return resultado
-    except Exception as e:
-        if "não encontrados" in str(e):
-             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, 
-                detail=str(e)
-            )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail=f"Erro na simulação: {e}"
-        )
-
-
-@router.get(
     "/resultados/{candidato_id}",
     response_model=schemas.ResultadoSimulacao, 
     summary="Obtém a classificação de bolsa ProUni via modelo de IA (Integral/Parcial)."

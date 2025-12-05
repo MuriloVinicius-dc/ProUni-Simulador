@@ -4,7 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from db import models
 from db.database import engine
 from db.auth.router import router as auth_router 
-from db.routers.candidato_router import router as candidato_router 
+from db.routers.candidato_router import router as candidato_router
+from db.routers.simulacao_direta_router import router as simulacao_direta_router
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -28,3 +29,5 @@ app.add_middleware(
 app.include_router(auth_router)
 
 app.include_router(candidato_router)
+
+app.include_router(simulacao_direta_router)

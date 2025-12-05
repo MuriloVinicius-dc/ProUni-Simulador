@@ -20,20 +20,26 @@ export default function SimulacaoPage() {
   const [erro, setErro] = useState(null);
 
   const handleSubmitFormulario = async (dados) => {
+    console.log('📝 Formulário submetido:', dados);
     setDadosSimulacao(dados);
     setEtapa("processamento");
     setErro(null);
 
     try {
-      if (USE_REAL_API && user?.candidato_id) {
-        // Modo API: envia ao backend e recebe resultado calculado
+      console.log('🔍 USE_REAL_API:', USE_REAL_API);
+      console.log('👤 User:', user);
+      
+      if (USE_REAL_API) {
+        // Modo API: sempre usa a API direta agora
+        console.log('✅ Usando API FastAPI');
         await processarSimulacaoComAPI(dados);
       } else {
         // Modo local/Supabase: calcula no frontend
+        console.log('✅ Usando processamento local');
         await processarSimulacaoLocal(dados);
       }
     } catch (error) {
-      console.error('Erro ao processar simulação:', error);
+      console.error('❌ Erro ao processar simulação:', error);
       setErro(error.message || 'Erro ao processar simulação. Tente novamente.');
       setEtapa("formulario");
     }
@@ -41,134 +47,116 @@ export default function SimulacaoPage() {
 
   // Processamento via API FastAPI
   const processarSimulacaoComAPI = async (dados) => {
-    setTimeout(async () => {
-      try {
-        // 1. Envia os dados complementares do formulário ao backend
-        await simulacaoService.preencherFormulario(user.candidato_id, {
-          nota: dados.nota,
-          instituicao: dados.instituicao,
-          curso: dados.curso
-        });
+    try {
+      console.log('🔄 Iniciando processamento com API...', dados);
+      
+      // Aguarda 1.5s para efeito visual de processamento
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Envia os dados do formulário ao backend para análise do modelo
+      const resultadoIA = await simulacaoService.analisarCandidato({
+        idade: dados.idade,
+        modalidade_concorrencia: dados.modalidade_concorrencia,
+        pcd: dados.pcd,
+        sexo: dados.sexo,
+        raca_beneficiario: dados.raca_beneficiario,
+        regiao_beneficiario: dados.regiao_beneficiario,
+        modalidade_ensino: dados.modalidade_ensino,
+        nome_turno: dados.nome_turno,
+        nome_curso: dados.nome_curso,
+        nome_instituicao: dados.nome_instituicao,
+      });
 
-        // 2. Aguarda um pouco para garantir que os dados foram salvos
-        await new Promise(resolve => setTimeout(resolve, 800));
+      console.log('✅ Resultado da API:', resultadoIA);
 
-        // 3. Aciona a simulação de classificação de bolsa via IA
-        const resultadoClassificacao = await simulacaoService.simularClassificacao(user.candidato_id);
+      const novoResultado = {
+        // Dados do candidato
+        idade: dados.idade,
+        sexo: dados.sexo,
+        raca: dados.raca_beneficiario,
+        pcd: dados.pcd,
+        regiao: dados.regiao_beneficiario,
+        // Dados do curso
+        nome_curso: dados.nome_curso,
+        turno: dados.nome_turno,
+        modalidade_ensino: dados.modalidade_ensino,
+        modalidade_concorrencia: dados.modalidade_concorrencia,
+        // Dados da instituição
+        instituicao: dados.nome_instituicao,
+        // Resultados da IA
+        classificacao: resultadoIA.classificacao || "Não Elegível",
+        probabilidade: resultadoIA.probabilidade || 0,
+        mensagem: resultadoIA.mensagem || "Resultado da análise do modelo de IA",
+        selecionado: resultadoIA.classificacao && resultadoIA.classificacao !== "Não Elegível",
+      };
 
-        // 4. Monta o resultado no formato esperado pelo frontend
-        const novoResultado = {
-          // Dados do curso
-          nome_curso: dados.curso.nome_curso,
-          grau: dados.curso.grau,
-          turno: dados.curso.turno,
-          // Dados da instituição
-          instituicao: dados.instituicao.sigla,
-          instituicao_nome: dados.instituicao.nome,
-          localizacao_campus: dados.instituicao.localizacao_campus,
-          // Dados da nota
-          modalidade: dados.nota.modalidade_concorrencia,
-          nota_lc: dados.nota.nota_lc,
-          nota_mt: dados.nota.nota_mt,
-          nota_ch: dados.nota.nota_ch,
-          nota_ct: dados.nota.nota_ct,
-          nota_redacao: dados.nota.nota_redacao,
-          // Resultados do backend (classificação de bolsa via IA)
-          classificacao_bolsa: resultadoClassificacao.classificacao_bolsa,
-          mensagem: resultadoClassificacao.mensagem,
-          // Mock de dados adicionais para o layout
-          mediaEnem: (dados.nota.nota_lc + dados.nota.nota_mt + dados.nota.nota_ch + dados.nota.nota_ct + dados.nota.nota_redacao) / 5,
-          selecionado: resultadoClassificacao.classificacao_bolsa !== 'Não Elegível',
-          posicao: Math.floor(Math.random() * 10) + 1,
-          vagas: 10,
-          ingresso: "1º Semestre",
-          link_instituicao: "#",
-        };
+      // Persiste localmente (opcional, para histórico)
+      await Simulacao.create({
+        ...novoResultado,
+        resultado_elegivel: novoResultado.selecionado,
+        pontuacao_calculada: novoResultado.probabilidade,
+      });
 
-        // 5. Persiste localmente (opcional, para histórico)
-        await Simulacao.create({
-          ...novoResultado,
-          resultado_elegivel: novoResultado.selecionado,
-          pontuacao_calculada: novoResultado.mediaEnem,
-        });
-
-        setResultado(novoResultado);
-        setEtapa("resultado");
-      } catch (error) {
-        throw new Error(`Erro na API: ${error.message}`);
-      }
-    }, 1500); // Delay inicial para UX
+      console.log('📊 Resultado final:', novoResultado);
+      setResultado(novoResultado);
+      setEtapa("resultado");
+    } catch (error) {
+      console.error('❌ Erro no processamento:', error);
+      alert(`Erro ao processar simulação: ${error.message}`);
+      setEtapa("formulario");
+    }
   };
 
   // Processamento local (modo Supabase/Demo)
   const processarSimulacaoLocal = async (dados) => {
-    setTimeout(async () => {
-      const { mediaEnem, selecionado, posicao, vagas, notaMinima } = calcularResultado(dados);
+    try {
+      console.log('🔄 Iniciando processamento local...', dados);
+      
+      // Aguarda 3s para efeito visual de processamento
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      // Simulação simples baseada em regras
+      const probabilidadeMock = Math.random() * 100;
+      const selecionado = probabilidadeMock > 50;
       
       const novoResultado = {
+        // Dados do candidato
+        idade: dados.idade,
+        sexo: dados.sexo,
+        raca: dados.raca_beneficiario,
+        pcd: dados.pcd,
+        regiao: dados.regiao_beneficiario,
         // Dados do curso
-        nome_curso: dados.curso.nome_curso,
-        grau: dados.curso.grau,
-        turno: dados.curso.turno,
+        nome_curso: dados.nome_curso,
+        turno: dados.nome_turno,
+        modalidade_ensino: dados.modalidade_ensino,
+        modalidade_concorrencia: dados.modalidade_concorrencia,
         // Dados da instituição
-        instituicao: dados.instituicao.sigla,
-        instituicao_nome: dados.instituicao.nome,
-        localizacao_campus: dados.instituicao.localizacao_campus,
-        // Dados da nota
-        modalidade: dados.nota.modalidade_concorrencia,
-        nota_lc: dados.nota.nota_lc,
-        nota_mt: dados.nota.nota_mt,
-        nota_ch: dados.nota.nota_ch,
-        nota_ct: dados.nota.nota_ct,
-        nota_redacao: dados.nota.nota_redacao,
-        // Resultados calculados
-        mediaEnem,
+        instituicao: dados.nome_instituicao,
+        // Resultados simulados
+        classificacao: selecionado ? "Bolsa Integral" : "Não Elegível",
+        probabilidade: probabilidadeMock.toFixed(2),
+        mensagem: selecionado 
+          ? "Com base no seu perfil, você tem boas chances de conseguir uma bolsa!" 
+          : "Seu perfil não atende aos critérios mínimos para esta simulação.",
         selecionado,
-        posicao,
-        vagas,
-        nota_minima: notaMinima,
-        // Hardcoded para o layout
-        ingresso: "1º Semestre", 
-        link_instituicao: "#",
       };
 
-      // Salvar no banco (opcional, mantendo a estrutura)
+      // Salvar no banco (opcional)
       await Simulacao.create({
         ...novoResultado,
         resultado_elegivel: selecionado,
-        pontuacao_calculada: mediaEnem,
+        pontuacao_calculada: probabilidadeMock,
       });
       
+      console.log('📊 Resultado local:', novoResultado);
       setResultado(novoResultado);
       setEtapa("resultado");
-    }, 3000);
-  };
-
-  const calcularResultado = (dados) => {
-    // Dados agora vêm na estrutura: { nota: {...}, instituicao: {...}, curso: {...} }
-    const mediaEnem = (
-      dados.nota.nota_lc +
-      dados.nota.nota_mt +
-      dados.nota.nota_ch +
-      dados.nota.nota_ct +
-      dados.nota.nota_redacao
-    ) / 5;
-
-    // Mock de nota mínima (em produção viria do backend)
-    const notaMinima = 600;
-    const selecionado = mediaEnem >= notaMinima;
-    const vagas = 10; // Mock
-    let posicao;
-
-    if (selecionado) {
-      // Se selecionado, gera uma posição dentro do número de vagas
-      posicao = Math.floor(Math.random() * vagas) + 1;
-    } else {
-      // Se não, gera uma posição acima do número de vagas
-      posicao = vagas + Math.floor(Math.random() * 10) + 1;
+    } catch (error) {
+      console.error('❌ Erro no processamento local:', error);
+      alert(`Erro ao processar simulação: ${error.message}`);
+      setEtapa("formulario");
     }
-    
-    return { mediaEnem, selecionado, posicao, vagas, notaMinima };
   };
 
   const reiniciarSimulacao = () => {
@@ -180,6 +168,7 @@ export default function SimulacaoPage() {
 
   return (
     <div className="min-h-screen py-8 px-6">
+      {console.log('🎨 Renderizando página - Etapa:', etapa, 'Erro:', erro, 'Resultado:', resultado)}
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
